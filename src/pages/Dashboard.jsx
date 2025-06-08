@@ -1,6 +1,9 @@
 import React from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import MapSearch from "../components/MapSearch";
+
+// Добавь внутрь return в Dashboard.jsx
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
@@ -19,6 +22,8 @@ const Dashboard = () => {
       <button onClick={handleLogout} style={{ padding: "0.5rem 1rem", marginTop: "1rem" }}>
         Выйти
       </button>
+      <MapSearch onPlaceSelected={(place) => console.log("Выбранный бизнес:", place)} />
+
     </div>
   );
 };
