@@ -7,15 +7,16 @@ import { GOOGLE_MAPS_API_KEY } from "../config";
 import { analyzeSentiment } from "../services/sentiment";
 
 const sentimentColors = {
-  positive: "#4caf50", // зелёный
-  neutral: "#9e9e9e",  // серый
-  negative: "#f44336", // красный
-  unknown: "#000000",  // чёрный (если ошибка)
+  positive: "#4caf50",
+  neutral: "#9e9e9e",
+  negative: "#f44336",
+  unknown: "#000000",
 };
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+
   const [reviews, setReviews] = useState([]);
   const [selectedBusiness, setSelectedBusiness] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -28,20 +29,17 @@ const Dashboard = () => {
 
   const handlePlaceSelected = async (place) => {
     try {
-      console.log("Выбранный бизнес:", place);
       setSelectedBusiness(place);
       setLoading(true);
       setAnalyzing(false);
 
       const details = await fetchPlaceDetails(place.place_id, GOOGLE_MAPS_API_KEY);
       const originalReviews = details.reviews || [];
-
-      setReviews(originalReviews); // Сначала показываем отзывы без сентимента
-
+      setReviews(originalReviews);
       setLoading(false);
       setAnalyzing(true);
 
-      // Анализируем каждый отзыв
+      // Анализируем отзывы через Hugging Face API
       const reviewsWithSentiment = await Promise.all(
         originalReviews.map(async (review) => {
           try {

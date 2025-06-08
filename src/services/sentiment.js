@@ -1,7 +1,6 @@
-import { HUGGINGFACE_API_KEY  } from "../config";
-// services/sentiment.js
-export const analyzeSentiment = async (text) => {
+import { HUGGINGFACE_API_KEY } from "../config";
 
+export async function analyzeSentiment(text) {
   const response = await fetch(
     "https://router.huggingface.co/hf-inference/models/tabularisai/multilingual-sentiment-analysis",
     {
@@ -20,5 +19,13 @@ export const analyzeSentiment = async (text) => {
   }
 
   const result = await response.json();
-  return result;
-};
+
+  // Проверяем, что ответ корректный и парсим лейбл
+  if (!Array.isArray(result) || !result[0] || !result[0][0]) {
+    return "unknown";
+  }
+
+  const label = result[0][0].label.toLowerCase(); // "POSITIVE", "NEUTRAL", "NEGATIVE"
+
+  return ["positive", "neutral", "negative"].includes(label) ? label : "unknown";
+}
