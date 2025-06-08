@@ -118,7 +118,7 @@ const displayedReviews = [...injectedReviews, ...reviews]
           marginBottom: "1rem",
         }}
       >
-        Simulate New Review
+        Reload
       </button>
 
       {displayedReviews.map((review, index) => (
