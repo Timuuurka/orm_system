@@ -42,17 +42,21 @@ const Dashboard = () => {
       setAnalyzing(true);
 
       // Анализируем каждый отзыв
-      const reviewsWithSentiment = await Promise.all(
-        originalReviews.map(async (review) => {
-          try {
-            const sentiment = await analyzeSentiment(review.text);
-            return { ...review, sentiment };
-          } catch (error) {
-            console.error("Ошибка анализа сентимента:", error);
-            return { ...review, sentiment: "unknown" };
-          }
-        })
-      );
+console.log("Начинаем анализ сентимента отзывов...");
+
+const reviewsWithSentiment = await Promise.all(
+  originalReviews.map(async (review) => {
+    try {
+      const sentiment = await analyzeSentiment(review.text);
+      console.log(`Отзыв: "${review.text}" -> сентимент: ${sentiment}`);
+      return { ...review, sentiment };
+    } catch (error) {
+      console.error("Ошибка анализа сентимента:", error);
+      return { ...review, sentiment: "unknown" };
+    }
+  })
+);
+
 
       setReviews(reviewsWithSentiment);
       setAnalyzing(false);
