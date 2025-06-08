@@ -81,9 +81,10 @@ const Dashboard = () => {
       <div style={{ padding: "2rem", maxWidth: 900, margin: "0 auto" }}>
         <h1 style={{ textAlign: "center", marginBottom: 20 }}>Dashboard</h1>
 
-        <div className="w-full" style={{ marginBottom: 30 }}>
-          <MapSearch onPlaceSelected={handlePlaceSelected} />
-        </div>
+<div className="w-screen h-screen overflow-hidden m-0 p-0">
+  <MapSearch onPlaceSelected={handlePlaceSelected} />
+</div>
+
 
         {selectedBusiness && (
           <>

@@ -4,7 +4,7 @@ import { FaUserCircle, FaBell, FaSearch } from "react-icons/fa";
 import { MdLogout, MdSettings, MdDarkMode, MdLightMode } from "react-icons/md";
 import { useAuth } from "../context/AuthContext";
 
-export default function Header({ title = "Dashboard", toggleDarkMode }) {
+export default function Header({ title = "ORM", toggleDarkMode }) {
   const { user, logout } = useAuth();
   const [showDropdown, setShowDropdown] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
