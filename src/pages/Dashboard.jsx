@@ -6,12 +6,8 @@ import { fetchPlaceDetails } from "../services/googlePlaces";
 import { GOOGLE_MAPS_API_KEY } from "../config";
 import { analyzeSentiment } from "../services/sentiment";
 
-const sentimentColors = {
-  positive: "#4caf50",
-  neutral: "#9e9e9e",
-  negative: "#f44336",
-  unknown: "#000000",
-};
+import BusinessCard from "../components/BusinessCard";
+import SentimentChart from "../components/SentimentChart";
 
 const POLLING_INTERVAL = 10 * 60 * 1000; // 10 минут
 
@@ -32,7 +28,6 @@ const Dashboard = () => {
     navigate("/login");
   };
 
-  // Функция обновления отзывов и сентимента
   const updateReviews = async (placeId) => {
     try {
       setLoading(true);
@@ -41,18 +36,18 @@ const Dashboard = () => {
       const details = await fetchPlaceDetails(placeId, GOOGLE_MAPS_API_KEY);
       const newReviews = details.reviews || [];
 
-      // Фильтруем только новые отзывы по уникальному идентификатору (например, time)
-      const existingTimes = new Set(savedReviewsRef.current.map(r => r.time));
-      const freshReviews = newReviews.filter(r => !existingTimes.has(r.time));
+      // Отфильтровываем новые отзывы по времени
+      const existingTimes = new Set(savedReviewsRef.current.map((r) => r.time));
+      const freshReviews = newReviews.filter((r) => !existingTimes.has(r.time));
 
       if (freshReviews.length === 0) {
         setLoading(false);
-        return; // Нет новых отзывов
+        return;
       }
 
       setAnalyzing(true);
 
-      // Анализируем сентимент новых отзывов
+      // Анализ сентимента для новых отзывов
       const freshReviewsWithSentiment = await Promise.all(
         freshReviews.map(async (review) => {
           try {
@@ -64,9 +59,9 @@ const Dashboard = () => {
         })
       );
 
-      // Обновляем локальное хранилище и стейт
       savedReviewsRef.current = [...freshReviewsWithSentiment, ...savedReviewsRef.current];
       setReviews(savedReviewsRef.current);
+
       setAnalyzing(false);
       setLoading(false);
     } catch (error) {
@@ -76,21 +71,19 @@ const Dashboard = () => {
     }
   };
 
-  // Обработчик выбора бизнеса
   const handlePlaceSelected = (place) => {
     setSelectedBusiness(place);
-    savedReviewsRef.current = []; // сброс локального кэша при выборе нового бизнеса
+    savedReviewsRef.current = [];
     setReviews([]);
+
     updateReviews(place.place_id);
 
-    // Запускаем polling
     if (pollingRef.current) clearInterval(pollingRef.current);
     pollingRef.current = setInterval(() => {
       updateReviews(place.place_id);
     }, POLLING_INTERVAL);
   };
 
-  // Очистка таймера при размонтировании компонента
   useEffect(() => {
     return () => {
       if (pollingRef.current) clearInterval(pollingRef.current);
@@ -100,7 +93,7 @@ const Dashboard = () => {
   return (
     <div style={{ padding: "2rem" }}>
       <h1>Добро пожаловать, {user?.name}</h1>
-      <img src={user?.picture} alt="User" style={{ borderRadius: "50%" }} />
+      <img src={user?.picture} alt="User" style={{ borderRadius: "50%", width: 64, height: 64 }} />
       <p>Email: {user?.email}</p>
       <button onClick={handleLogout} style={{ padding: "0.5rem 1rem", marginTop: "1rem" }}>
         Выйти
@@ -112,44 +105,16 @@ const Dashboard = () => {
 
       {selectedBusiness && (
         <div style={{ marginTop: "2rem" }}>
-          <h2>{selectedBusiness.name}</h2>
-          <p>{selectedBusiness.formatted_address}</p>
+          <BusinessCard business={selectedBusiness} reviews={reviews} />
+          <div style={{ marginTop: "2rem" }}>
+            <h2>График настроений</h2>
+            <SentimentChart reviews={reviews} />
+          </div>
         </div>
       )}
 
       {loading && <p>Загрузка отзывов...</p>}
       {analyzing && <p>Анализ сентимента отзывов...</p>}
-
-      {reviews.length > 0 && (
-        <div style={{ marginTop: "2rem" }}>
-          <h2>Отзывы:</h2>
-          {reviews.map((review, index) => (
-            <div
-              key={index}
-              style={{
-                border: "1px solid #ccc",
-                padding: "1rem",
-                marginBottom: "1rem",
-                borderRadius: "8px",
-              }}
-            >
-              <p>
-                <strong>{review.author_name}</strong> (оценка: {review.rating}) —{" "}
-                <span
-                  style={{
-                    color: sentimentColors[review.sentiment] || sentimentColors.unknown,
-                    fontWeight: "bold",
-                    textTransform: "capitalize",
-                  }}
-                >
-                  {review.sentiment || "unknown"}
-                </span>
-              </p>
-              <p>{review.text}</p>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   );
 };
