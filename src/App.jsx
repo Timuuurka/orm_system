@@ -6,6 +6,7 @@ import PrivateRoute from "./components/PrivateRoute";
 
 // Новые страницы
 import About from "./pages/About";
+import Alerts from "./pages/Alerts";
 import Contact from "./pages/Contact";
 import Blog from "./pages/Blog";
 import Terms from "./pages/Terms";
@@ -39,6 +40,11 @@ function App() {
       <Route path="/reviews" element={
         <PrivateRoute>
           <Reviews />
+        </PrivateRoute>
+      } />
+        <Route path="/alerts" element={
+        <PrivateRoute>
+          <Alerts />
         </PrivateRoute>
       } />
 

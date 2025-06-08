@@ -1,8 +1,8 @@
 /** @type {import('tailwindcss').Config} */
-module.exports = {
+export default {
   content: [
-    "./index.html",         // для Vite
-    "./src/**/*.{js,jsx}",  // для всех твоих компонентов и страниц
+    "./index.html",
+    "./src/**/*.{js,jsx}"
   ],
   theme: {
     extend: {},
