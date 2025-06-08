@@ -6,7 +6,7 @@ export async function analyzeSentiment(text) {
     {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${HUGGINGFACE_API_KEY}`,
+        Authorization: `Bearer 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`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ inputs: text }),
