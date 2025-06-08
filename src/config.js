@@ -1,3 +1,2 @@
 export const GOOGLE_MAPS_API_KEY = "AIzaSyArqcfoCC8RdR9DrAOcMSHbLluski1dSY8";
-export const HUGGINGFACE_API_KEY = process.env.REACT_APP_HUGGINGFACE_API_KEY;
 
