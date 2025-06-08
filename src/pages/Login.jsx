@@ -29,13 +29,15 @@ const Login = () => {
         client_id: CLIENT_ID,
         callback: (credentialResponse) => {
           login(credentialResponse);
-          navigate("/dashboard"); // ⬅️ Перенаправление после логина
+          navigate("/dashboard");
         },
       });
 
       window.google.accounts.id.renderButton(googleButtonRef.current, {
         theme: "outline",
         size: "large",
+        shape: "pill",
+        width: "300",
       });
 
       window.google.accounts.id.prompt();
@@ -49,9 +51,24 @@ const Login = () => {
   }, [isAuthenticated, navigate]);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: 100 }}>
-      <h2>Вход через Google</h2>
-      <div ref={googleButtonRef}></div>
+    <div className="flex items-center justify-center min-h-screen bg-gray-50 px-4">
+      <div className="w-full max-w-md bg-white shadow-lg rounded-2xl p-8 space-y-6 animate-fade-in">
+        <div className="text-center">
+          <img
+            src="/logo.png"
+            alt="Logo"
+            className="mx-auto w-20 h-20 rounded-full shadow"
+          />
+          <h2 className="mt-4 text-2xl font-semibold text-gray-800">Welcome Back</h2>
+          <p className="text-sm text-gray-500">Sign in to continue to ORM System</p>
+        </div>
+        <div ref={googleButtonRef} className="flex justify-center" />
+        <p className="text-xs text-gray-400 text-center mt-6">
+          By continuing, you agree to our{" "}
+          <a href="/terms" className="underline text-blue-600">Terms of Service</a> and{" "}
+          <a href="/privacy" className="underline text-blue-600">Privacy Policy</a>.
+        </p>
+      </div>
     </div>
   );
 };
