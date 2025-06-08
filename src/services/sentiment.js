@@ -1,7 +1,7 @@
 import { HUGGINGFACE_API_KEY  } from "../config";
 // services/sentiment.js
 export async function analyzeSentiment(text) {
-  const response = await fetch("https://api-inference.huggingface.co/models/tabularisai/multilingual-sentiment-analysis", {
+  const response = await fetch("https://api-inference.huggingface.co/tabularisai/multilingual-sentiment-analysis", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${HUGGINGFACE_API_KEY }`,
