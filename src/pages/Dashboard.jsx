@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import MapSearch from "../components/MapSearch";
 import { fetchPlaceDetails } from "../services/googlePlaces";
 import { GOOGLE_MAPS_API_KEY } from "../config";
+import { analyzeSentiment } from "../services/sentiment";
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
@@ -24,11 +25,40 @@ const Dashboard = () => {
       setLoading(true);
 
       const details = await fetchPlaceDetails(place.place_id, GOOGLE_MAPS_API_KEY);
-      setReviews(details.reviews || []);
+      const originalReviews = details.reviews || [];
+
+      // Анализируем сентимент каждого отзыва
+      const reviewsWithSentiment = await Promise.all(
+        originalReviews.map(async (review) => {
+          try {
+            const sentiment = await analyzeSentiment(review.text);
+            return { ...review, sentiment };
+          } catch (error) {
+            console.error("Ошибка анализа сентимента:", error);
+            return { ...review, sentiment: "unknown" };
+          }
+        })
+      );
+
+      setReviews(reviewsWithSentiment);
       setLoading(false);
     } catch (error) {
       console.error("Ошибка при загрузке деталей места:", error.message);
       setLoading(false);
+    }
+  };
+
+  // Функция для цветного отображения сентимента
+  const sentimentColor = (sentiment) => {
+    switch (sentiment) {
+      case "positive":
+        return "green";
+      case "negative":
+        return "red";
+      case "neutral":
+        return "gray";
+      default:
+        return "black";
     }
   };
 
@@ -68,7 +98,10 @@ const Dashboard = () => {
               }}
             >
               <p>
-                <strong>{review.author_name}</strong> (оценка: {review.rating})
+                <strong>{review.author_name}</strong> (оценка: {review.rating}) —{" "}
+                <span style={{ color: sentimentColor(review.sentiment), fontWeight: "bold" }}>
+                  {review.sentiment?.toUpperCase() || "N/A"}
+                </span>
               </p>
               <p>{review.text}</p>
             </div>
