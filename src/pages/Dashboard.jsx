@@ -79,9 +79,9 @@ const Dashboard = () => {
   return (
     <MainLayout title="Dashboard">
       <div style={{ padding: "2rem", maxWidth: 900, margin: "0 auto" }}>
-        <h1 style={{ textAlign: "center", marginBottom: 20 }}>Дашборд отзывов</h1>
+        <h1 style={{ textAlign: "center", marginBottom: 20 }}>Dashboard</h1>
 
-        <div style={{ marginBottom: 30 }}>
+        <div style={{ marginBottom: 30, width: "80%" }}>
           <MapSearch onPlaceSelected={handlePlaceSelected} />
         </div>
 
