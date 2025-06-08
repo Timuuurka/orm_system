@@ -87,6 +87,7 @@ const displayedReviews = [...injectedReviews, ...reviews]
 
 
   return (
+    <MainLayout title="Dashboard">
     <div style={{ padding: "2rem" }}>
       <h1>Добро пожаловать, {user?.name}</h1>
       <img src={user?.picture} alt="User" style={{ borderRadius: "50%" }} />
@@ -152,6 +153,7 @@ const displayedReviews = [...injectedReviews, ...reviews]
 )}
 
     </div>
+    </MainLayout>
   );
 };
 

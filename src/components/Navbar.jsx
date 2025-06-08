@@ -2,12 +2,23 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 
 const Navbar = () => (
-  <nav className="bg-gray-100 p-4">
-    <div className="max-w-6xl mx-auto flex gap-6">
-      <NavLink to="/dashboard" className="text-gray-700 hover:text-black">Dashboard</NavLink>
-      <NavLink to="/reviews" className="text-gray-700 hover:text-black">Reviews</NavLink>
-      <NavLink to="/alerts" className="text-gray-700 hover:text-black">Alerts</NavLink>
-      <NavLink to="/reports" className="text-gray-700 hover:text-black">Reports</NavLink>
+  <nav className="bg-gray-100 dark:bg-gray-800 py-4 shadow">
+    <div className="max-w-6xl mx-auto flex justify-center space-x-8">
+      {["/dashboard", "/reviews", "/alerts", "/reports"].map((path, i) => (
+        <NavLink
+          key={i}
+          to={path}
+          className={({ isActive }) =>
+            `text-lg font-medium transition-colors ${
+              isActive
+                ? "text-blue-600 dark:text-blue-400"
+                : "text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white"
+            }`
+          }
+        >
+          {path.slice(1).charAt(0).toUpperCase() + path.slice(2)}
+        </NavLink>
+      ))}
     </div>
   </nav>
 );
