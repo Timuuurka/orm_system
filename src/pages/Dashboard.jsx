@@ -7,12 +7,10 @@ import { analyzeSentiment } from "../services/sentiment";
 import { GOOGLE_MAPS_API_KEY } from "../config";
 
 const sentimentColors = {
-  "Very Positive": "#2e7d32",
-  "Positive": "#4caf50",
-  "Neutral": "#9e9e9e",
-  "Negative": "#f44336",
-  "Very Negative": "#b71c1c",
-  unknown: "#000000"
+  positive: "#4caf50",
+  neutral: "#9e9e9e",
+  negative: "#f44336",
+  unknown: "#000000",
 };
 
 const Dashboard = () => {
@@ -23,7 +21,6 @@ const Dashboard = () => {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
-  const [error, setError] = useState(null);
 
   const handleLogout = () => {
     logout();
@@ -31,38 +28,39 @@ const Dashboard = () => {
   };
 
   const handlePlaceSelected = async (place) => {
-    setError(null);
     setSelectedBusiness(place);
     setLoading(true);
     setAnalyzing(false);
     setReviews([]);
 
     try {
+      console.log("📍 Выбранное место:", place);
       const details = await fetchPlaceDetails(place.place_id, GOOGLE_MAPS_API_KEY);
       const originalReviews = details.reviews || [];
 
-      setReviews(originalReviews);
+      console.log("💬 Получено отзывов:", originalReviews.length);
+
+      setReviews(originalReviews); // сначала показываем без анализа
       setLoading(false);
-
-      if (originalReviews.length === 0) {
-        return;
-      }
-
       setAnalyzing(true);
+
       const reviewsWithSentiment = await Promise.all(
         originalReviews.map(async (review) => {
           try {
             const sentiment = await analyzeSentiment(review.text);
+            console.log(`🔎 Отзыв: "${review.text}" -> Сентимент: ${sentiment}`);
             return { ...review, sentiment };
-          } catch {
+          } catch (err) {
+            console.error("❌ Ошибка анализа сентимента:", err);
             return { ...review, sentiment: "unknown" };
           }
         })
       );
+
+      console.log("✅ Отзывы с сентиментом:", reviewsWithSentiment);
       setReviews(reviewsWithSentiment);
     } catch (err) {
-      setError("Не удалось загрузить данные о месте.");
-      console.error(err);
+      console.error("❌ Ошибка загрузки деталей места:", err.message);
     } finally {
       setLoading(false);
       setAnalyzing(false);
@@ -70,55 +68,58 @@ const Dashboard = () => {
   };
 
   return (
-    <div style={{ padding: "2rem", maxWidth: "800px", margin: "0 auto" }}>
-      <header style={{ marginBottom: "2rem" }}>
-        <h1>Добро пожаловать, {user?.name}</h1>
-        <img src={user?.picture} alt="User" style={{ borderRadius: "50%", width: 80 }} />
-        <p>Email: {user?.email}</p>
-        <button onClick={handleLogout} style={{ padding: "0.5rem 1rem", marginTop: "1rem" }}>
-          Выйти
-        </button>
-      </header>
+    <div style={{ padding: "2rem", fontFamily: "Arial, sans-serif" }}>
+      <h1>Добро пожаловать, {user?.name}</h1>
+      <img src={user?.picture} alt="User" style={{ width: 80, borderRadius: "50%" }} />
+      <p>Email: {user?.email}</p>
+      <button onClick={handleLogout} style={{ marginTop: "1rem", padding: "0.5rem 1rem" }}>
+        Выйти
+      </button>
 
-      <section style={{ marginBottom: "2rem" }}>
-        <h2>🔍 Поиск по карте</h2>
+      <div style={{ marginTop: "2rem" }}>
         <MapSearch onPlaceSelected={handlePlaceSelected} />
-      </section>
+      </div>
 
       {selectedBusiness && (
-        <section style={{ marginBottom: "1rem" }}>
-          <h2>🏢 {selectedBusiness.name}</h2>
+        <div style={{ marginTop: "2rem" }}>
+          <h2>{selectedBusiness.name}</h2>
           <p>{selectedBusiness.formatted_address}</p>
-        </section>
+        </div>
       )}
 
-      {loading && <p>⏳ Загрузка отзывов...</p>}
-      {analyzing && <p>🧠 Анализ сентимента...</p>}
-      {error && <p style={{ color: "red" }}>❌ {error}</p>}
+      {loading && <p>Загрузка отзывов...</p>}
+      {analyzing && <p>Анализ сентимента отзывов...</p>}
 
       {reviews.length > 0 && (
-        <section style={{ marginTop: "2rem" }}>
-          <h2>📝 Отзывы</h2>
+        <div style={{ marginTop: "2rem" }}>
+          <h2>Отзывы:</h2>
           {reviews.map((review, index) => (
             <div
               key={index}
               style={{
-                border: "1px solid #ccc",
+                border: "1px solid #ddd",
+                borderRadius: "8px",
                 padding: "1rem",
                 marginBottom: "1rem",
-                borderRadius: "8px"
               }}
             >
               <p>
-                <strong>{review.author_name}</strong> — Оценка: {review.rating}
+                <strong>{review.author_name}</strong> (оценка: {review.rating}) —
+                <span
+                  style={{
+                    color: sentimentColors[review.sentiment] || sentimentColors.unknown,
+                    marginLeft: "0.5rem",
+                    fontWeight: "bold",
+                    textTransform: "capitalize",
+                  }}
+                >
+                  {review.sentiment || "unknown"}
+                </span>
               </p>
-              <p style={{ margin: "0.5rem 0" }}>{review.text}</p>
-              <p style={{ color: sentimentColors[review.sentiment] || sentimentColors.unknown, fontWeight: "bold" }}>
-                Сентимент: {review.sentiment}
-              </p>
+              <p>{review.text}</p>
             </div>
           ))}
-        </section>
+        </div>
       )}
     </div>
   );
