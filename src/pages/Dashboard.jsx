@@ -8,6 +8,7 @@ import { analyzeSentiment } from "../services/sentiment";
 import { referenceSamples } from "../utils/constants";
 import BusinessCard from "../components/BusinessCard";
 import SentimentChart from "../components/SentimentChart";
+import MainLayout from "../layouts/MainLayout"; 
 
 const sentimentColors = {
   positive: "#4caf50",
