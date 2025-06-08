@@ -32,6 +32,11 @@ function App() {
           <Dashboard />
         </PrivateRoute>
       } />
+      <Route path="/" element={
+        <PrivateRoute>
+          <Dashboard />
+        </PrivateRoute>
+      } />
       <Route path="/reports" element={
         <PrivateRoute>
           <Reports />

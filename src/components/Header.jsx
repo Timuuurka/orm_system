@@ -1,26 +1,16 @@
 import { Link } from "react-router-dom";
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import {
-  FaUserCircle,
-  FaBell,
-  FaSearch,
-} from "react-icons/fa";
-import {
-  MdLogout,
-  MdDarkMode,
-  MdLightMode,
-} from "react-icons/md";
+import { FaUserCircle, FaBell, FaSearch } from "react-icons/fa";
+import { MdLogout, MdSettings, MdDarkMode, MdLightMode } from "react-icons/md";
+import { useAuth } from "../context/AuthContext";
 
 export default function Header({ title = "Dashboard", toggleDarkMode }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [username, setUsername] = useState("");
+  const { user, logout } = useAuth();
   const [showDropdown, setShowDropdown] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [language, setLanguage] = useState("EN");
   const [searchQuery, setSearchQuery] = useState("");
-  const [isDarkMode, setIsDarkMode] = useState(
-    () => localStorage.getItem("theme") === "dark"
-  );
+  const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem("theme") === "dark");
   const [notifications, setNotifications] = useState([
     { id: 1, message: "New review on your business!", read: false },
     { id: 2, message: "System update scheduled for tomorrow.", read: true },
@@ -30,10 +20,7 @@ export default function Header({ title = "Dashboard", toggleDarkMode }) {
   const dropdownRef = useRef();
 
   const handleClickOutside = useCallback((e) => {
-    if (
-      notificationRef.current &&
-      !notificationRef.current.contains(e.target)
-    ) {
+    if (notificationRef.current && !notificationRef.current.contains(e.target)) {
       setShowNotifications(false);
     }
     if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -42,11 +29,6 @@ export default function Header({ title = "Dashboard", toggleDarkMode }) {
   }, []);
 
   useEffect(() => {
-    const auth = localStorage.getItem("auth") === "true";
-    setIsAuthenticated(auth);
-    const storedName = localStorage.getItem("username") || "Owner";
-    setUsername(storedName);
-
     const browserLang = navigator.language.slice(0, 2).toUpperCase();
     setLanguage(["EN", "RU", "KZ", "ES", "FR", "DE"].includes(browserLang) ? browserLang : "EN");
 
@@ -65,29 +47,17 @@ export default function Header({ title = "Dashboard", toggleDarkMode }) {
     toggleDarkMode && toggleDarkMode(newTheme);
   };
 
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-    localStorage.removeItem("auth");
-    localStorage.removeItem("username");
-    setUsername("");
-  };
-
-  const unreadCount = useMemo(
-    () => notifications.filter((n) => !n.read).length,
-    [notifications]
-  );
-
   const markNotificationAsRead = (id) => {
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, read: true } : n))
     );
   };
 
+  const unreadCount = useMemo(() => notifications.filter((n) => !n.read).length, [notifications]);
+
   return (
     <header className="bg-white dark:bg-gray-800 shadow-md p-4 flex justify-between items-center">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-        {title}
-      </h1>
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{title}</h1>
 
       <div className="relative hidden md:block">
         <input
@@ -114,7 +84,7 @@ export default function Header({ title = "Dashboard", toggleDarkMode }) {
           <option value="DE">🇩🇪 DE</option>
         </select>
 
-        {isAuthenticated && (
+        {user && (
           <div className="relative" ref={notificationRef}>
             <button
               onClick={() => setShowNotifications(!showNotifications)}
@@ -136,9 +106,7 @@ export default function Header({ title = "Dashboard", toggleDarkMode }) {
                       key={n.id}
                       onClick={() => markNotificationAsRead(n.id)}
                       className={`px-4 py-2 text-sm cursor-pointer ${
-                        n.read
-                          ? "text-gray-500"
-                          : "text-gray-900 dark:text-white"
+                        n.read ? "text-gray-500" : "text-gray-900 dark:text-white"
                       } hover:bg-gray-100 dark:hover:bg-gray-700`}
                     >
                       {n.message}
@@ -160,7 +128,7 @@ export default function Header({ title = "Dashboard", toggleDarkMode }) {
           {isDarkMode ? <MdLightMode size={24} /> : <MdDarkMode size={24} />}
         </button>
 
-        {isAuthenticated ? (
+        {user ? (
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setShowDropdown(!showDropdown)}
@@ -168,17 +136,21 @@ export default function Header({ title = "Dashboard", toggleDarkMode }) {
               aria-haspopup="true"
               aria-expanded={showDropdown}
             >
-              <FaUserCircle className="h-6 w-6 text-blue-500" />
-              <span className="hidden sm:block">{username}</span>
+              <img
+                src={user.picture}
+                alt={user.name}
+                className="w-8 h-8 rounded-full"
+              />
+              <span className="hidden sm:block">{user.name}</span>
             </button>
             {showDropdown && (
               <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg py-1 z-10">
                 <button
-                  onClick={handleLogout}
-                  className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  onClick={logout}
+                  className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
                 >
-                  <MdLogout className="inline mr-2" />
-                  Logout
+                  <MdLogout />
+                  <span>Logout</span>
                 </button>
               </div>
             )}
