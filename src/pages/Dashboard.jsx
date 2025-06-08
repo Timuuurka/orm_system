@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import MapSearch from "../components/MapSearch";
@@ -13,6 +13,8 @@ const sentimentColors = {
   unknown: "#000000",
 };
 
+const POLLING_INTERVAL = 10 * 60 * 1000; // 10 минут
+
 const Dashboard = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -22,44 +24,78 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
 
+  const pollingRef = useRef(null);
+  const savedReviewsRef = useRef([]);
+
   const handleLogout = () => {
     logout();
     navigate("/login");
   };
 
-  const handlePlaceSelected = async (place) => {
+  // Функция обновления отзывов и сентимента
+  const updateReviews = async (placeId) => {
     try {
-      setSelectedBusiness(place);
       setLoading(true);
       setAnalyzing(false);
 
-      const details = await fetchPlaceDetails(place.place_id, GOOGLE_MAPS_API_KEY);
-      const originalReviews = details.reviews || [];
-      setReviews(originalReviews);
-      setLoading(false);
+      const details = await fetchPlaceDetails(placeId, GOOGLE_MAPS_API_KEY);
+      const newReviews = details.reviews || [];
+
+      // Фильтруем только новые отзывы по уникальному идентификатору (например, time)
+      const existingTimes = new Set(savedReviewsRef.current.map(r => r.time));
+      const freshReviews = newReviews.filter(r => !existingTimes.has(r.time));
+
+      if (freshReviews.length === 0) {
+        setLoading(false);
+        return; // Нет новых отзывов
+      }
+
       setAnalyzing(true);
 
-      // Анализируем отзывы через Hugging Face API
-      const reviewsWithSentiment = await Promise.all(
-        originalReviews.map(async (review) => {
+      // Анализируем сентимент новых отзывов
+      const freshReviewsWithSentiment = await Promise.all(
+        freshReviews.map(async (review) => {
           try {
             const sentiment = await analyzeSentiment(review.text);
             return { ...review, sentiment };
-          } catch (error) {
-            console.error("Ошибка анализа сентимента:", error);
+          } catch {
             return { ...review, sentiment: "unknown" };
           }
         })
       );
 
-      setReviews(reviewsWithSentiment);
+      // Обновляем локальное хранилище и стейт
+      savedReviewsRef.current = [...freshReviewsWithSentiment, ...savedReviewsRef.current];
+      setReviews(savedReviewsRef.current);
       setAnalyzing(false);
+      setLoading(false);
     } catch (error) {
-      console.error("Ошибка при загрузке деталей места:", error.message);
+      console.error("Ошибка обновления отзывов:", error);
       setLoading(false);
       setAnalyzing(false);
     }
   };
+
+  // Обработчик выбора бизнеса
+  const handlePlaceSelected = (place) => {
+    setSelectedBusiness(place);
+    savedReviewsRef.current = []; // сброс локального кэша при выборе нового бизнеса
+    setReviews([]);
+    updateReviews(place.place_id);
+
+    // Запускаем polling
+    if (pollingRef.current) clearInterval(pollingRef.current);
+    pollingRef.current = setInterval(() => {
+      updateReviews(place.place_id);
+    }, POLLING_INTERVAL);
+  };
+
+  // Очистка таймера при размонтировании компонента
+  useEffect(() => {
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+    };
+  }, []);
 
   return (
     <div style={{ padding: "2rem" }}>
