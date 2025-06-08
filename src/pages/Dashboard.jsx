@@ -4,14 +4,6 @@ import { useNavigate } from "react-router-dom";
 import MapSearch from "../components/MapSearch";
 import { fetchPlaceDetails } from "../services/googlePlaces";
 import { GOOGLE_MAPS_API_KEY } from "../config";
-import { analyzeSentiment } from "../services/sentiment";
-
-const sentimentColors = {
-  positive: "#4caf50", // зелёный
-  neutral: "#9e9e9e",  // серый
-  negative: "#f44336", // красный
-  unknown: "#000000",  // чёрный (если ошибка)
-};
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
@@ -19,7 +11,6 @@ const Dashboard = () => {
   const [reviews, setReviews] = useState([]);
   const [selectedBusiness, setSelectedBusiness] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [analyzing, setAnalyzing] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -31,35 +22,13 @@ const Dashboard = () => {
       console.log("Выбранный бизнес:", place);
       setSelectedBusiness(place);
       setLoading(true);
-      setAnalyzing(false);
 
       const details = await fetchPlaceDetails(place.place_id, GOOGLE_MAPS_API_KEY);
-      const originalReviews = details.reviews || [];
-
-      setReviews(originalReviews); // Сначала показываем отзывы без сентимента
-
+      setReviews(details.reviews || []);
       setLoading(false);
-      setAnalyzing(true);
-
-      // Анализируем каждый отзыв
-      const reviewsWithSentiment = await Promise.all(
-        originalReviews.map(async (review) => {
-          try {
-            const sentiment = await analyzeSentiment(review.text);
-            return { ...review, sentiment };
-          } catch (error) {
-            console.error("Ошибка анализа сентимента:", error);
-            return { ...review, sentiment: "unknown" };
-          }
-        })
-      );
-
-      setReviews(reviewsWithSentiment);
-      setAnalyzing(false);
     } catch (error) {
       console.error("Ошибка при загрузке деталей места:", error.message);
       setLoading(false);
-      setAnalyzing(false);
     }
   };
 
@@ -84,7 +53,6 @@ const Dashboard = () => {
       )}
 
       {loading && <p>Загрузка отзывов...</p>}
-      {analyzing && <p>Анализ сентимента отзывов...</p>}
 
       {reviews.length > 0 && (
         <div style={{ marginTop: "2rem" }}>
@@ -100,16 +68,7 @@ const Dashboard = () => {
               }}
             >
               <p>
-                <strong>{review.author_name}</strong> (оценка: {review.rating}) —{" "}
-                <span
-                  style={{
-                    color: sentimentColors[review.sentiment] || sentimentColors.unknown,
-                    fontWeight: "bold",
-                    textTransform: "capitalize",
-                  }}
-                >
-                  {review.sentiment || "unknown"}
-                </span>
+                <strong>{review.author_name}</strong> (оценка: {review.rating})
               </p>
               <p>{review.text}</p>
             </div>

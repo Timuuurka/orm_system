@@ -1,5 +1,4 @@
 import { HF_API_TOKEN } from "../config";
-
 export const analyzeSentiment = async (text) => {
   const response = await fetch(
     "https://api-inference.huggingface.co/models/tabularisai/multilingual-sentiment-analysis",
