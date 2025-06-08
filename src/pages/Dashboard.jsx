@@ -16,6 +16,15 @@ const sentimentColors = {
   unknown: "#000000",
 };
 
+// 🔥 Подготовленный фейковый отзыв
+const fakeReview = {
+  author_name: "Тимур",
+  rating: 5,
+  text: "Очень хороший сервис! Все понравилось. Спасибо!",
+  time: Math.floor(Date.now() / 1000), // текущее время в UNIX
+  sentiment: "positive",
+};
+
 const Dashboard = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -24,6 +33,7 @@ const Dashboard = () => {
   const [selectedBusiness, setSelectedBusiness] = useState(null);
   const [loading, setLoading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
+  const [showFakeReview, setShowFakeReview] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -38,11 +48,11 @@ const Dashboard = () => {
 
       const details = await fetchPlaceDetails(place.place_id, GOOGLE_MAPS_API_KEY);
       const originalReviews = details.reviews || [];
+
       setReviews(originalReviews);
       setLoading(false);
       setAnalyzing(true);
 
-      // Анализируем отзывы через Hugging Face API
       const reviewsWithSentiment = await Promise.all(
         originalReviews.map(async (review) => {
           try {
@@ -64,6 +74,16 @@ const Dashboard = () => {
     }
   };
 
+  // 🔄 Вставка фейкового отзыва
+  const handleAddFakeReview = () => {
+    setShowFakeReview(true);
+  };
+
+  // 📅 Отсортированные по времени + только 5 самых свежих
+  const displayedReviews = [...(showFakeReview ? [fakeReview] : []), ...reviews]
+    .sort((a, b) => b.time - a.time)
+    .slice(0, 5);
+
   return (
     <div style={{ padding: "2rem" }}>
       <h1>Добро пожаловать, {user?.name}</h1>
@@ -84,16 +104,19 @@ const Dashboard = () => {
           </div>
 
           <div style={{ marginTop: "2rem" }}>
-            <SentimentChart reviews={reviews} />
+            <SentimentChart reviews={displayedReviews} />
           </div>
 
           <div style={{ marginTop: "2rem" }}>
             <h2>Отзывы:</h2>
+            <button onClick={handleAddFakeReview} style={{ marginBottom: "1rem" }}>
+              🔄 Обновить отзывы
+            </button>
             {loading && <p>Загрузка отзывов...</p>}
             {analyzing && <p>Анализ сентимента отзывов...</p>}
-            {reviews.length === 0 && !loading && <p>Отзывы не найдены.</p>}
+            {displayedReviews.length === 0 && !loading && <p>Отзывы не найдены.</p>}
 
-            {reviews.map((review, index) => (
+            {displayedReviews.map((review, index) => (
               <div
                 key={index}
                 style={{
@@ -104,7 +127,7 @@ const Dashboard = () => {
                 }}
               >
                 <p>
-                  <strong>{review.author_name}</strong> (оценка: {review.rating}) —{" "}
+                  <strong>{review.author_name ? review.author_name[0] : "?"}</strong> (оценка: {review.rating}) —{" "}
                   <span
                     style={{
                       color: sentimentColors[review.sentiment] || sentimentColors.unknown,
