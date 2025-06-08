@@ -5,7 +5,7 @@ import MapSearch from "../components/MapSearch";
 import { fetchPlaceDetails } from "../services/googlePlaces";
 import { GOOGLE_MAPS_API_KEY } from "../config";
 import { analyzeSentiment } from "../services/sentiment";
-
+import { referenceSamples } from "../utils/constants";
 import BusinessCard from "../components/BusinessCard";
 import SentimentChart from "../components/SentimentChart";
 
@@ -16,14 +16,7 @@ const sentimentColors = {
   unknown: "#000000",
 };
 
-// 🔥 Подготовленный фейковый отзыв
-const fakeReview = {
-  author_name: "Тимур",
-  rating: 5,
-  text: "Очень хороший сервис! Все понравилось. Спасибо!",
-  time: Math.floor(Date.now() / 1000), // текущее время в UNIX
-  sentiment: "positive",
-};
+
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
@@ -74,15 +67,23 @@ const Dashboard = () => {
     }
   };
 
-  // 🔄 Вставка фейкового отзыва
-  const handleAddFakeReview = () => {
-    setShowFakeReview(true);
-  };
+const [injectedReviews, setInjectedReviews] = useState([]);
 
-  // 📅 Отсортированные по времени + только 5 самых свежих
-  const displayedReviews = [...(showFakeReview ? [fakeReview] : []), ...reviews]
-    .sort((a, b) => b.time - a.time)
-    .slice(0, 5);
+const handleAddFakeReview = () => {
+  const nextReview = referenceSamples[injectedReviews.length];
+  if (nextReview) {
+    const updated = {
+      ...nextReview,
+      time: Math.floor(Date.now() / 1000), 
+    };
+    setInjectedReviews([...injectedReviews, updated]);
+  }
+};
+
+const displayedReviews = [...injectedReviews, ...reviews]
+  .sort((a, b) => b.time - a.time)
+  .slice(0, 5);
+
 
   return (
     <div style={{ padding: "2rem" }}>
@@ -97,53 +98,58 @@ const Dashboard = () => {
         <MapSearch onPlaceSelected={handlePlaceSelected} />
       </div>
 
-      {selectedBusiness && (
-        <>
-          <div style={{ marginTop: "2rem" }}>
-            <BusinessCard business={selectedBusiness} reviews={reviews} />
-          </div>
+{selectedBusiness && (
+  <>
+    {/* ... */}
+    <div style={{ marginTop: "2rem" }}>
+      <h2>Отзывы:</h2>
+      {loading && <p>Загрузка отзывов...</p>}
+      {analyzing && <p>Анализ сентимента отзывов...</p>}
+      {displayedReviews.length === 0 && !loading && <p>Отзывы не найдены.</p>}
 
-          <div style={{ marginTop: "2rem" }}>
-            <SentimentChart reviews={displayedReviews} />
-          </div>
+      <button
+        onClick={handleAddFakeReview}
+        style={{
+          padding: "0.5rem 1rem",
+          backgroundColor: "#2196f3",
+          color: "white",
+          border: "none",
+          borderRadius: "5px",
+          marginBottom: "1rem",
+        }}
+      >
+        Simulate New Review
+      </button>
 
-          <div style={{ marginTop: "2rem" }}>
-            <h2>Отзывы:</h2>
-            <button onClick={handleAddFakeReview} style={{ marginBottom: "1rem" }}>
-              🔄 Обновить отзывы
-            </button>
-            {loading && <p>Загрузка отзывов...</p>}
-            {analyzing && <p>Анализ сентимента отзывов...</p>}
-            {displayedReviews.length === 0 && !loading && <p>Отзывы не найдены.</p>}
+      {displayedReviews.map((review, index) => (
+        <div
+          key={index}
+          style={{
+            border: "1px solid #ccc",
+            padding: "1rem",
+            marginBottom: "1rem",
+            borderRadius: "8px",
+          }}
+        >
+          <p>
+            <strong>{review.author_name[0]}</strong> (rating: {review.rating}) —{" "}
+            <span
+              style={{
+                color: sentimentColors[review.sentiment] || sentimentColors.unknown,
+                fontWeight: "bold",
+                textTransform: "capitalize",
+              }}
+            >
+              {review.sentiment || "unknown"}
+            </span>
+          </p>
+          <p>{review.text}</p>
+        </div>
+      ))}
+    </div>
+  </>
+)}
 
-            {displayedReviews.map((review, index) => (
-              <div
-                key={index}
-                style={{
-                  border: "1px solid #ccc",
-                  padding: "1rem",
-                  marginBottom: "1rem",
-                  borderRadius: "8px",
-                }}
-              >
-                <p>
-                  <strong>{review.author_name ? review.author_name[0] : "?"}</strong> (оценка: {review.rating}) —{" "}
-                  <span
-                    style={{
-                      color: sentimentColors[review.sentiment] || sentimentColors.unknown,
-                      fontWeight: "bold",
-                      textTransform: "capitalize",
-                    }}
-                  >
-                    {review.sentiment || "unknown"}
-                  </span>
-                </p>
-                <p>{review.text}</p>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
     </div>
   );
 };
