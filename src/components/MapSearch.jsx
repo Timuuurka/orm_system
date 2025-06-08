@@ -17,7 +17,7 @@ const MapSearch = ({ onPlaceSelected }) => {
   };
 
   return (
-    <div className="w-[70%] h-[80vh] mx-auto relative rounded-xl shadow-lg overflow-hidden">
+    <div className="w-[70%] max-w-4xl h-[60vh] mx-auto my-8 relative rounded-xl shadow-lg overflow-hidden">
       <LoadScript googleMapsApiKey={GOOGLE_MAPS_API_KEY} libraries={libraries}>
         <GoogleMap
           mapContainerStyle={{ width: "100%", height: "100%" }}
@@ -31,7 +31,7 @@ const MapSearch = ({ onPlaceSelected }) => {
             <input
               type="text"
               placeholder="Введите название бизнеса"
-              className="absolute top-4 left-1/2 transform -translate-x-1/2 w-[320px] h-10 px-4 text-sm border border-gray-300 rounded-md shadow-md z-10 focus:outline-none"
+              className="absolute top-4 left-1/2 transform -translate-x-1/2 w-[280px] sm:w-[320px] h-10 px-4 text-sm border border-gray-300 rounded-md shadow-md z-10 focus:outline-none"
             />
           </StandaloneSearchBox>
         </GoogleMap>
