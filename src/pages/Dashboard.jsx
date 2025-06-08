@@ -114,7 +114,7 @@ const Dashboard = () => {
                     : "Добавить ещё фейковый отзыв"
                 }
               >
-                Reload (подгрузить фейковые отзывы)
+                Reload
               </button>
 
               <div style={{ display: "flex", flexDirection: "column", gap: 15 }}>
