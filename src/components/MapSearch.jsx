@@ -18,7 +18,7 @@ const MapSearch = ({ onPlaceSelected }) => {
 
   return (
     <div className="overflow-x-hidden">
-      <div className="w-[75%] max-w-4xl h-[60vh] ml-[50px] my-8 relative rounded-xl shadow-lg overflow-hidden">
+      <div className="w-[75%] max-w-4xl h-[60vh] my-8 relative rounded-xl shadow-lg overflow-hidden">
         <LoadScript googleMapsApiKey={GOOGLE_MAPS_API_KEY} libraries={libraries}>
           <GoogleMap
             mapContainerStyle={{ width: "100%", height: "100%" }}
