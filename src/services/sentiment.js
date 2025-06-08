@@ -1,8 +1,8 @@
 import { HF_API_TOKEN } from "../config";
 
 const API_URL = "https://api-inference.huggingface.co/models/tabularisai/multilingual-sentiment-analysis";
-const HF_TOKEN = HF_API_TOKEN;
 
+const HF_TOKEN = HF_API_TOKEN 
 export async function analyzeSentiment(text) {
   if (!text || text.trim() === "") return "unknown";
 
@@ -23,13 +23,11 @@ export async function analyzeSentiment(text) {
   const data = await response.json();
 
   try {
-    // data = [[ { label: ..., score: ... }, ... ]]
-    const predictions = Array.isArray(data) ? data[0] : null;
-    if (!Array.isArray(predictions) || predictions.length === 0) return "unknown";
+    const result = Array.isArray(data) ? data[0] : null;
+    if (!result || !result.label) return "unknown";
 
-    const topPrediction = predictions[0];
-    const label = topPrediction.label;
-
+    const label = result.label;
+    // Модель возвращает один из: "Very Negative", "Negative", "Neutral", "Positive", "Very Positive"
     if (label.includes("Negative")) return "negative";
     if (label.includes("Positive")) return "positive";
     if (label.includes("Neutral")) return "neutral";
