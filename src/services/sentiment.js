@@ -1,10 +1,10 @@
-import { HF_API_TOKEN } from "../config";
+import { HUGGINGFACE_API_KEY  } from "../config";
 // services/sentiment.js
 export async function analyzeSentiment(text) {
   const response = await fetch("https://api-inference.huggingface.co/models/tabularisai/multilingual-sentiment-analysis", {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${HF_API_TOKEN}`,
+      Authorization: `Bearer ${HUGGINGFACE_API_KEY }`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ inputs: text }),
