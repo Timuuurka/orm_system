@@ -15,17 +15,19 @@ export async function analyzeSentiment(text) {
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`Hugging Face API error: ${errorText}`);
+    console.error("Hugging Face API error response:", errorText);
+    throw new Error(`Hugging Face API error: ${response.status} ${response.statusText}`);
   }
 
   const result = await response.json();
+  console.log("Hugging Face API result:", result);
 
-  // Проверяем, что ответ корректный и парсим лейбл
   if (!Array.isArray(result) || !result[0] || !result[0][0]) {
     return "unknown";
   }
 
-  const label = result[0][0].label.toLowerCase(); // "POSITIVE", "NEUTRAL", "NEGATIVE"
+  const label = result[0][0].label.toLowerCase();
 
   return ["positive", "neutral", "negative"].includes(label) ? label : "unknown";
 }
+
