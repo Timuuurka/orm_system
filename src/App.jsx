@@ -47,11 +47,6 @@ function App() {
           <Reviews />
         </PrivateRoute>
       } />
-        <Route path="/alerts" element={
-        <PrivateRoute>
-          <Alerts />
-        </PrivateRoute>
-      } />
 
       {/* 404 */}
       <Route path="*" element={<NotFound />} />
