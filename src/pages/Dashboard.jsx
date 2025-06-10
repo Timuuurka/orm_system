@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import MapSearch from "../components/MapSearch";
 import { fetchPlaceDetails } from "../services/googlePlaces";
 import { GOOGLE_MAPS_API_KEY } from "../config";
@@ -21,23 +21,45 @@ const Dashboard = () => {
   const [selectedBusiness, setSelectedBusiness] = useState(null);
   const [loading, setLoading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
+  const [alerts, setAlerts] = useState([]); // 🔥 новое состояние
 
-  const [alerts, setAlerts] = useState([]); // 🔥 список алертов
+  // Выявление резкого пика негатива
+  const detectAlert = (allReviews) => {
+    const now = Math.floor(Date.now() / 1000);
+    const last24hReviews = allReviews.filter((r) => now - r.time <= 86400);
+
+    const negativeCount = last24hReviews.filter((r) => r.sentiment === "negative").length;
+    const alertTriggered =
+      last24hReviews.length > 0 && negativeCount / last24hReviews.length > 0.3;
+
+    if (alertTriggered) {
+      const alert = {
+        id: Date.now(),
+        timestamp: new Date().toLocaleString(),
+        message: `🚨 Более 30% негативных отзывов за последние 24 часа (${negativeCount}/${last24hReviews.length})`,
+        handled: false,
+      };
+      setAlerts((prev) => [...prev, alert]);
+    }
+  };
+
+  const markAlertHandled = (id) => {
+    setAlerts((prev) =>
+      prev.map((a) => (a.id === id ? { ...a, handled: true } : a))
+    );
+  };
 
   const handlePlaceSelected = async (place) => {
     setSelectedBusiness(place);
     setLoading(true);
     setAnalyzing(false);
     setFakeReviews([]);
-    setAlerts([]); // 🔥 сброс алертов при смене бизнеса
 
     try {
       const details = await fetchPlaceDetails(place.place_id, GOOGLE_MAPS_API_KEY);
       const originalReviews = details.reviews || [];
 
-      const firstFive = originalReviews
-        .sort((a, b) => b.time - a.time)
-        .slice(0, 5);
+      const firstFive = originalReviews.sort((a, b) => b.time - a.time).slice(0, 5);
 
       setReviews(firstFive);
       setLoading(false);
@@ -55,6 +77,7 @@ const Dashboard = () => {
       );
 
       setReviews(analyzed);
+      detectAlert(analyzed); // 🔥 анализируем алерты
     } catch (e) {
       console.error("Ошибка при загрузке отзывов:", e);
       setReviews([]);
@@ -67,39 +90,14 @@ const Dashboard = () => {
   const handleAddFakeReview = () => {
     if (fakeReviews.length < referenceSamples.length) {
       const nextFake = referenceSamples[fakeReviews.length];
-      setFakeReviews([...fakeReviews, { ...nextFake, time: Math.floor(Date.now() / 1000) }]);
+      setFakeReviews([
+        ...fakeReviews,
+        { ...nextFake, time: Math.floor(Date.now() / 1000) },
+      ]);
     }
   };
 
   const displayedReviews = [...reviews, ...fakeReviews].sort((a, b) => b.time - a.time);
-
-  // 🔥 АНОМАЛИЯ: проверка при изменении отзывов
-  useEffect(() => {
-    const detectAnomaly = () => {
-      const now = Date.now() / 1000;
-      const last24h = displayedReviews.filter((r) => now - r.time <= 86400);
-      if (last24h.length < 3) return; // минимум 3 отзыва для статистики
-
-      const negativeCount = last24h.filter((r) => r.sentiment === "negative").length;
-      const ratio = negativeCount / last24h.length;
-
-      if (ratio > 0.3) {
-        const alert = {
-          id: Date.now(),
-          message: `За последние 24ч зафиксирован пик негатива (${(ratio * 100).toFixed(1)}%)`,
-          timestamp: new Date().toLocaleString(),
-        };
-        setAlerts((prev) => [...prev.filter((a) => a.message !== alert.message), alert]);
-      }
-    };
-
-    detectAnomaly();
-  }, [displayedReviews]); // 🔥 пересчитывать при изменении отзывов
-
-  // 🔥 удаление алерта
-  const handleDismissAlert = (id) => {
-    setAlerts(alerts.filter((a) => a.id !== id));
-  };
 
   return (
     <MainLayout title="Dashboard">
@@ -157,7 +155,9 @@ const Dashboard = () => {
                       <strong>{review.author_name[0]}</strong> — рейтинг: {review.rating}{" "}
                       <span
                         style={{
-                          color: sentimentColors[review.sentiment] || sentimentColors.unknown,
+                          color:
+                            sentimentColors[review.sentiment] ||
+                            sentimentColors.unknown,
                           fontWeight: "bold",
                           textTransform: "capitalize",
                           marginLeft: 10,
@@ -167,6 +167,11 @@ const Dashboard = () => {
                       </span>
                     </p>
                     <p>{review.text}</p>
+                    {review.alert && (
+                      <p style={{ color: "#d32f2f", fontWeight: "bold" }}>
+                        ⚠️ Внимание! Подозрительный отзыв
+                      </p>
+                    )}
                   </div>
                 ))}
               </div>
@@ -177,42 +182,50 @@ const Dashboard = () => {
               <SentimentChart reviews={displayedReviews} />
             </div>
 
-            {/* 🔥 UI: АЛЕРТЫ */}
-            {alerts.length > 0 && (
-              <div style={{ marginTop: 40 }}>
-                <h2 style={{ color: "#d32f2f" }}>⚠️ Алерты</h2>
-                {alerts.map((alert) => (
-                  <div
-                    key={alert.id}
-                    style={{
-                      backgroundColor: "#ffebee",
-                      padding: 15,
-                      borderRadius: 8,
-                      marginBottom: 15,
-                      border: "1px solid #f44336",
-                      boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-                    }}
-                  >
-                    <p style={{ marginBottom: 5 }}>{alert.message}</p>
-                    <p style={{ fontSize: 12, color: "#999" }}>{alert.timestamp}</p>
+            {/* 🔥 Блок алертов */}
+            <div style={{ marginTop: 40 }}>
+              <h2>Алерты</h2>
+              {alerts.length === 0 && <p>Алертов пока нет.</p>}
+              {alerts.map((alert) => (
+                <div
+                  key={alert.id}
+                  style={{
+                    border: "1px solid #f44336",
+                    padding: 15,
+                    borderRadius: 8,
+                    marginBottom: 10,
+                    backgroundColor: alert.handled ? "#e0e0e0" : "#ffebee",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <div>
+                    <strong>{alert.timestamp}</strong>
+                    <p style={{ margin: 0 }}>{alert.message}</p>
+                  </div>
+                  {!alert.handled ? (
                     <button
-                      onClick={() => handleDismissAlert(alert.id)}
+                      onClick={() => markAlertHandled(alert.id)}
                       style={{
-                        marginTop: 10,
-                        backgroundColor: "#d32f2f",
+                        backgroundColor: "#4caf50",
                         color: "white",
                         border: "none",
                         borderRadius: 6,
-                        padding: "0.3rem 0.8rem",
+                        padding: "6px 12px",
                         cursor: "pointer",
                       }}
                     >
-                      Пометить как обработанный
+                      Обработано
                     </button>
-                  </div>
-                ))}
-              </div>
-            )}
+                  ) : (
+                    <span style={{ color: "#4caf50", fontWeight: "bold" }}>
+                      ✅ Обработано
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
           </>
         )}
       </div>
