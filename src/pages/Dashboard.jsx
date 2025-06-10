@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import MapSearch from "../components/MapSearch";
 import { fetchPlaceDetails } from "../services/googlePlaces";
 import { GOOGLE_MAPS_API_KEY } from "../config";
@@ -7,7 +7,6 @@ import { referenceSamples } from "../utils/constants";
 import BusinessCard from "../components/BusinessCard";
 import SentimentChart from "../components/SentimentChart";
 import MainLayout from "../layouts/MainLayout";
-import { detectAnomalyAlert } from "../services/alerts";
 
 const sentimentColors = {
   positive: "#4caf50",
@@ -17,24 +16,25 @@ const sentimentColors = {
 };
 
 const Dashboard = () => {
-  const [reviews, setReviews] = useState([]); // реальные из Google
-  const [fakeReviews, setFakeReviews] = useState([]); // фейки вручную подгружаемые
+  const [reviews, setReviews] = useState([]);
+  const [fakeReviews, setFakeReviews] = useState([]);
   const [selectedBusiness, setSelectedBusiness] = useState(null);
   const [loading, setLoading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
 
-  // Загружаем реальные отзывы
+  const [alerts, setAlerts] = useState([]); // 🔥 список алертов
+
   const handlePlaceSelected = async (place) => {
     setSelectedBusiness(place);
     setLoading(true);
     setAnalyzing(false);
-    setFakeReviews([]); // сброс фейков при смене бизнеса
+    setFakeReviews([]);
+    setAlerts([]); // 🔥 сброс алертов при смене бизнеса
 
     try {
       const details = await fetchPlaceDetails(place.place_id, GOOGLE_MAPS_API_KEY);
       const originalReviews = details.reviews || [];
 
-      // Ограничиваем только первыми 5 реальными отзывами (сортируем по времени, последние сверху)
       const firstFive = originalReviews
         .sort((a, b) => b.time - a.time)
         .slice(0, 5);
@@ -43,7 +43,6 @@ const Dashboard = () => {
       setLoading(false);
       setAnalyzing(true);
 
-      // Анализ сентимента реальных отзывов
       const analyzed = await Promise.all(
         firstFive.map(async (review) => {
           try {
@@ -55,26 +54,6 @@ const Dashboard = () => {
         })
       );
 
-        const reviewsWithSentiment = await Promise.all(
-    originalReviews.map(async (review) => {
-      try {
-        const sentiment = await analyzeSentiment(review.text);
-        return { ...review, sentiment };
-      } catch (error) {
-        return { ...review, sentiment: "unknown" };
-      }
-    })
-  );
-
-  setReviews(reviewsWithSentiment);
-  setAnalyzing(false);
-
-  const alert = detectAnomalyAlert(reviewsWithSentiment);
-  if (alert) {
-    const updated = [...alerts, alert];
-    setAlerts(updated);
-    localStorage.setItem("alerts", JSON.stringify(updated));
-  }
       setReviews(analyzed);
     } catch (e) {
       console.error("Ошибка при загрузке отзывов:", e);
@@ -92,18 +71,44 @@ const Dashboard = () => {
     }
   };
 
-const displayedReviews = [...reviews, ...fakeReviews]
-    .sort((a, b) => b.time - a.time);
+  const displayedReviews = [...reviews, ...fakeReviews].sort((a, b) => b.time - a.time);
+
+  // 🔥 АНОМАЛИЯ: проверка при изменении отзывов
+  useEffect(() => {
+    const detectAnomaly = () => {
+      const now = Date.now() / 1000;
+      const last24h = displayedReviews.filter((r) => now - r.time <= 86400);
+      if (last24h.length < 3) return; // минимум 3 отзыва для статистики
+
+      const negativeCount = last24h.filter((r) => r.sentiment === "negative").length;
+      const ratio = negativeCount / last24h.length;
+
+      if (ratio > 0.3) {
+        const alert = {
+          id: Date.now(),
+          message: `За последние 24ч зафиксирован пик негатива (${(ratio * 100).toFixed(1)}%)`,
+          timestamp: new Date().toLocaleString(),
+        };
+        setAlerts((prev) => [...prev.filter((a) => a.message !== alert.message), alert]);
+      }
+    };
+
+    detectAnomaly();
+  }, [displayedReviews]); // 🔥 пересчитывать при изменении отзывов
+
+  // 🔥 удаление алерта
+  const handleDismissAlert = (id) => {
+    setAlerts(alerts.filter((a) => a.id !== id));
+  };
 
   return (
     <MainLayout title="Dashboard">
       <div style={{ padding: "2rem", maxWidth: 900, margin: "0 auto" }}>
         <h1 style={{ textAlign: "center", marginBottom: 20 }}>Dashboard</h1>
 
-<div className="w-screen h-screen overflow-hidden m-0 p-0">
-  <MapSearch onPlaceSelected={handlePlaceSelected} />
-</div>
-
+        <div className="w-screen h-screen overflow-hidden m-0 p-0">
+          <MapSearch onPlaceSelected={handlePlaceSelected} />
+        </div>
 
         {selectedBusiness && (
           <>
@@ -162,11 +167,6 @@ const displayedReviews = [...reviews, ...fakeReviews]
                       </span>
                     </p>
                     <p>{review.text}</p>
-                    {review.alert && (
-                      <p style={{ color: "#d32f2f", fontWeight: "bold" }}>
-                        ⚠️ Внимание! Подозрительный отзыв
-                      </p>
-                    )}
                   </div>
                 ))}
               </div>
@@ -176,6 +176,43 @@ const displayedReviews = [...reviews, ...fakeReviews]
               <h2>Статистика по настроениям</h2>
               <SentimentChart reviews={displayedReviews} />
             </div>
+
+            {/* 🔥 UI: АЛЕРТЫ */}
+            {alerts.length > 0 && (
+              <div style={{ marginTop: 40 }}>
+                <h2 style={{ color: "#d32f2f" }}>⚠️ Алерты</h2>
+                {alerts.map((alert) => (
+                  <div
+                    key={alert.id}
+                    style={{
+                      backgroundColor: "#ffebee",
+                      padding: 15,
+                      borderRadius: 8,
+                      marginBottom: 15,
+                      border: "1px solid #f44336",
+                      boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                    }}
+                  >
+                    <p style={{ marginBottom: 5 }}>{alert.message}</p>
+                    <p style={{ fontSize: 12, color: "#999" }}>{alert.timestamp}</p>
+                    <button
+                      onClick={() => handleDismissAlert(alert.id)}
+                      style={{
+                        marginTop: 10,
+                        backgroundColor: "#d32f2f",
+                        color: "white",
+                        border: "none",
+                        borderRadius: 6,
+                        padding: "0.3rem 0.8rem",
+                        cursor: "pointer",
+                      }}
+                    >
+                      Пометить как обработанный
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </>
         )}
       </div>

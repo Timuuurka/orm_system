@@ -46,7 +46,6 @@ function App() {
           <Reviews />
         </PrivateRoute>
       } />
-
       {/* 404 */}
       <Route path="*" element={<NotFound />} />
     </Routes>
