@@ -7,6 +7,7 @@ import { referenceSamples } from "../utils/constants";
 import BusinessCard from "../components/BusinessCard";
 import SentimentChart from "../components/SentimentChart";
 import MainLayout from "../layouts/MainLayout";
+import { detectAnomalyAlert } from "../services/alerts";
 
 const sentimentColors = {
   positive: "#4caf50",
@@ -54,6 +55,26 @@ const Dashboard = () => {
         })
       );
 
+        const reviewsWithSentiment = await Promise.all(
+    originalReviews.map(async (review) => {
+      try {
+        const sentiment = await analyzeSentiment(review.text);
+        return { ...review, sentiment };
+      } catch (error) {
+        return { ...review, sentiment: "unknown" };
+      }
+    })
+  );
+
+  setReviews(reviewsWithSentiment);
+  setAnalyzing(false);
+
+  const alert = detectAnomalyAlert(reviewsWithSentiment);
+  if (alert) {
+    const updated = [...alerts, alert];
+    setAlerts(updated);
+    localStorage.setItem("alerts", JSON.stringify(updated));
+  }
       setReviews(analyzed);
     } catch (e) {
       console.error("Ошибка при загрузке отзывов:", e);
