@@ -33,11 +33,7 @@ function App() {
           <Dashboard />
         </PrivateRoute>
       } />
-            <Route path="/reports" element={
-        <PrivateRoute>
-          <Reports />
-        </PrivateRoute>
-      } />
+
       {/* 404 */}
       <Route path="*" element={<NotFound />} />
     </Routes>

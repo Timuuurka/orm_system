@@ -7,6 +7,7 @@ import { referenceSamples } from "../utils/constants";
 import BusinessCard from "../components/BusinessCard";
 import SentimentChart from "../components/SentimentChart";
 import MainLayout from "../layouts/MainLayout";
+import { generateCSV, generatePDF } from "../services/reportGenerator";
 
 const sentimentColors = {
   positive: "#4caf50",
@@ -21,9 +22,8 @@ const Dashboard = () => {
   const [selectedBusiness, setSelectedBusiness] = useState(null);
   const [loading, setLoading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
-  const [alerts, setAlerts] = useState([]); // 🔥 новое состояние
+  const [alerts, setAlerts] = useState([]);
 
-  // Выявление резкого пика негатива
   const detectAlert = (allReviews) => {
     const now = Math.floor(Date.now() / 1000);
     const last24hReviews = allReviews.filter((r) => now - r.time <= 86400);
@@ -77,7 +77,7 @@ const Dashboard = () => {
       );
 
       setReviews(analyzed);
-      detectAlert(analyzed); // 🔥 анализируем алерты
+      detectAlert(analyzed);
     } catch (e) {
       console.error("Ошибка при загрузке отзывов:", e);
       setReviews([]);
@@ -98,6 +98,14 @@ const Dashboard = () => {
   };
 
   const displayedReviews = [...reviews, ...fakeReviews].sort((a, b) => b.time - a.time);
+
+  const handleDownloadCSV = () => {
+    generateCSV(displayedReviews);
+  };
+
+  const handleDownloadPDF = () => {
+    generatePDF(displayedReviews, selectedBusiness?.name || "Business Report");
+  };
 
   return (
     <MainLayout title="Dashboard">
@@ -138,6 +146,35 @@ const Dashboard = () => {
               >
                 Reload
               </button>
+
+              <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
+                <button
+                  onClick={handleDownloadCSV}
+                  style={{
+                    padding: "0.5rem 1rem",
+                    backgroundColor: "#388e3c",
+                    color: "white",
+                    border: "none",
+                    borderRadius: 6,
+                    cursor: "pointer",
+                  }}
+                >
+                  Скачать CSV
+                </button>
+                <button
+                  onClick={handleDownloadPDF}
+                  style={{
+                    padding: "0.5rem 1rem",
+                    backgroundColor: "#d32f2f",
+                    color: "white",
+                    border: "none",
+                    borderRadius: 6,
+                    cursor: "pointer",
+                  }}
+                >
+                  Скачать PDF
+                </button>
+              </div>
 
               <div style={{ display: "flex", flexDirection: "column", gap: 15 }}>
                 {displayedReviews.map((review, i) => (
@@ -182,7 +219,6 @@ const Dashboard = () => {
               <SentimentChart reviews={displayedReviews} />
             </div>
 
-            {/* 🔥 Блок алертов */}
             <div style={{ marginTop: 40 }}>
               <h2>Алерты</h2>
               {alerts.length === 0 && <p>Алертов пока нет.</p>}

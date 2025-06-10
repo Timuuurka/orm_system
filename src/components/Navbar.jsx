@@ -4,7 +4,7 @@ import { NavLink } from 'react-router-dom';
 const Navbar = () => (
   <nav className="bg-gray-100 dark:bg-gray-800 py-4 shadow">
     <div className="max-w-6xl mx-auto flex justify-center space-x-8">
-      {["/dashboard", "/reports"].map((path, i) => (
+      {["/dashboard"].map((path, i) => (
         <NavLink
           key={i}
           to={path}
