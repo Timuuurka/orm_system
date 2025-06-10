@@ -4,6 +4,7 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import PrivateRoute from "./components/PrivateRoute";
 import About from "./pages/About";
+import Reports from "./pages/Reports";
 import Contact from "./pages/Contact";
 import Blog from "./pages/Blog";
 import Terms from "./pages/Terms";
@@ -30,6 +31,11 @@ function App() {
       <Route path="/" element={
         <PrivateRoute>
           <Dashboard />
+        </PrivateRoute>
+      } />
+            <Route path="/reports" element={
+        <PrivateRoute>
+          <Reports />
         </PrivateRoute>
       } />
       {/* 404 */}
