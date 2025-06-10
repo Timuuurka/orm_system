@@ -85,7 +85,6 @@ const Dashboard = () => {
     }
   };
 
-  // Добавляем фейковые отзывы по кнопке Reload
   const handleAddFakeReview = () => {
     if (fakeReviews.length < referenceSamples.length) {
       const nextFake = referenceSamples[fakeReviews.length];
@@ -93,8 +92,7 @@ const Dashboard = () => {
     }
   };
 
-  // Итоговый список для отображения — сначала реальные (до 5), потом фейки в хронологическом порядке
-  const displayedReviews = [...reviews, ...fakeReviews]
+const displayedReviews = [...reviews, ...fakeReviews]
     .sort((a, b) => b.time - a.time);
 
   return (

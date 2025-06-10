@@ -12,7 +12,7 @@ import Blog from "./pages/Blog";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import NotFound from "./pages/NotFound";
-import Reports from "./pages/Reports";
+import Reports from "./pages/ReportsPage";
 import Reviews from "./pages/Reviews";
 
 function App() {
