@@ -266,7 +266,7 @@ const Dashboard = () => {
           (r) => r.author_name === review.author_name
         ).length;
         if (sameAuthorCount > 1) {
-          threats.push("Повторяющийся автор (SPAM)");
+          threats.push("Spam");
         }
 
         // Smear Campaigns: если негативный отзыв в течение последних 24 часов при всплеске

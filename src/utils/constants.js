@@ -18,7 +18,7 @@ export const referenceSamples = [
         alert: true
   },
     {
-    author_name: "Adil.",
+    author_name: "Adi.",
     rating: 2,
     text: "If you're interested in making $10,000 a month from home, check out my profile! Not related to this place but trust me, it works.",
     time: Math.floor(Date.now() / 1000),
