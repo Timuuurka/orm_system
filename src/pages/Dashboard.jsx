@@ -86,15 +86,34 @@ const Dashboard = () => {
     }
   };
 
-  const handleAddFakeReview = () => {
-    if (fakeReviews.length < referenceSamples.length) {
-      const nextFake = referenceSamples[fakeReviews.length];
-      setFakeReviews([
-        ...fakeReviews,
-        { ...nextFake, time: Math.floor(Date.now() / 1000) },
-      ]);
-    }
-  };
+const handleAddFakeReview = () => {
+  if (fakeReviews.length < referenceSamples.length) {
+    const nextFake = {
+      ...referenceSamples[fakeReviews.length],
+      time: Math.floor(Date.now() / 1000),
+    };
+
+    const updatedFakeReviews = [...fakeReviews, nextFake];
+    setFakeReviews(updatedFakeReviews);
+
+    // Пересчёт рейтинга
+    const allReviews = [...reviews, ...updatedFakeReviews];
+    const newTotal = allReviews.length;
+    const newRating =
+      allReviews.reduce((sum, r) => sum + (r.rating || 0), 0) / newTotal;
+
+    // Обновление бизнес-объекта
+    setSelectedBusiness((prev) => ({
+      ...prev,
+      user_ratings_total: newTotal,
+      rating: newRating.toFixed(1),
+    }));
+
+    // Проверка на алерт
+    detectAlert(allReviews);
+  }
+};
+
 
   const displayedReviews = [...reviews, ...fakeReviews].sort((a, b) => b.time - a.time);
 
