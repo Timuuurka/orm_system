@@ -265,7 +265,10 @@ const Dashboard = () => {
         const sameAuthorCount = displayedReviews.filter(
           (r) => r.author_name === review.author_name
         ).length;
-        if (sameAuthorCount > 1) {
+                const spamwords = [
+          "making"
+        ];
+        if (spamwords.some((kw) => reviewText.includes(kw)) || (sameAuthorCount > 1) ){
           threats.push("Spam");
         }
       // Fake News (рус + англ)
