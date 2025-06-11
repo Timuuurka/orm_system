@@ -7,7 +7,8 @@ import { referenceSamples } from "../utils/constants";
 import BusinessCard from "../components/BusinessCard";
 import SentimentChart from "../components/SentimentChart";
 import MainLayout from "../layouts/MainLayout";
-import { generateCSV, generatePDF } from "../services/reportGenerator";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const sentimentColors = {
   positive: "#4caf50",
@@ -23,6 +24,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [alerts, setAlerts] = useState([]);
+  const [period, setPeriod] = useState("week");
 
   const detectAlert = (allReviews) => {
     const now = Math.floor(Date.now() / 1000);
@@ -58,7 +60,6 @@ const Dashboard = () => {
     try {
       const details = await fetchPlaceDetails(place.place_id, GOOGLE_MAPS_API_KEY);
       const originalReviews = details.reviews || [];
-
       const firstFive = originalReviews.sort((a, b) => b.time - a.time).slice(0, 5);
 
       setReviews(firstFive);
@@ -97,15 +98,58 @@ const Dashboard = () => {
     }
   };
 
+  const generateReport = (type = "pdf") => {
+    const all = [...reviews, ...fakeReviews];
+    const now = Date.now();
+    const cutoff = period === "week" ? now - 7 * 86400000 : now - 30 * 86400000;
+    const filtered = all.filter((r) => r.time * 1000 > cutoff);
+
+    const sentimentStats = filtered.reduce(
+      (acc, r) => {
+        acc[r.sentiment] = (acc[r.sentiment] || 0) + 1;
+        return acc;
+      },
+      { positive: 0, neutral: 0, negative: 0 }
+    );
+
+    if (type === "csv") {
+      const rows = filtered.map((r) =>
+        `${r.author_name},${r.rating},${r.sentiment},${r.text.replace(/[\r\n,]/g, " ")}`
+      );
+      const csv = `Author,Rating,Sentiment,Text\n${rows.join("\n")}`;
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "report.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } else {
+      const doc = new jsPDF();
+      doc.text(`Отчёт по отзывам (${period === "week" ? "неделя" : "месяц"})`, 14, 15);
+      doc.text(
+        `Всего отзывов: ${filtered.length}, Позитив: ${sentimentStats.positive}, Нейтрально: ${sentimentStats.neutral}, Негатив: ${sentimentStats.negative}`,
+        14,
+        25
+      );
+
+      autoTable(doc, {
+        startY: 35,
+        head: [["Автор", "Рейтинг", "Сентимент", "Текст"]],
+        body: filtered.map((r) => [
+          r.author_name,
+          r.rating,
+          r.sentiment,
+          r.text.slice(0, 60) + "...",
+        ]),
+      });
+
+      doc.save("report.pdf");
+    }
+  };
+
   const displayedReviews = [...reviews, ...fakeReviews].sort((a, b) => b.time - a.time);
-
-  const handleDownloadCSV = () => {
-    generateCSV(displayedReviews);
-  };
-
-  const handleDownloadPDF = () => {
-    generatePDF(displayedReviews, selectedBusiness?.name || "Business Report");
-  };
 
   return (
     <MainLayout title="Dashboard">
@@ -138,43 +182,9 @@ const Dashboard = () => {
                   cursor: "pointer",
                 }}
                 disabled={fakeReviews.length >= referenceSamples.length}
-                title={
-                  fakeReviews.length >= referenceSamples.length
-                    ? "Все фейковые отзывы подгружены"
-                    : "Добавить ещё фейковый отзыв"
-                }
               >
                 Reload
               </button>
-
-              <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
-                <button
-                  onClick={handleDownloadCSV}
-                  style={{
-                    padding: "0.5rem 1rem",
-                    backgroundColor: "#388e3c",
-                    color: "white",
-                    border: "none",
-                    borderRadius: 6,
-                    cursor: "pointer",
-                  }}
-                >
-                  Скачать CSV
-                </button>
-                <button
-                  onClick={handleDownloadPDF}
-                  style={{
-                    padding: "0.5rem 1rem",
-                    backgroundColor: "#d32f2f",
-                    color: "white",
-                    border: "none",
-                    borderRadius: 6,
-                    cursor: "pointer",
-                  }}
-                >
-                  Скачать PDF
-                </button>
-              </div>
 
               <div style={{ display: "flex", flexDirection: "column", gap: 15 }}>
                 {displayedReviews.map((review, i) => (
@@ -261,6 +271,50 @@ const Dashboard = () => {
                   )}
                 </div>
               ))}
+            </div>
+
+            <div style={{ marginTop: 40 }}>
+              <h2>Отчёт по отзывам</h2>
+              <div style={{ marginBottom: 15 }}>
+                <label>Период: </label>
+                <select
+                  value={period}
+                  onChange={(e) => setPeriod(e.target.value)}
+                  style={{ padding: "0.4rem", borderRadius: 6, marginLeft: 10 }}
+                >
+                  <option value="week">Неделя</option>
+                  <option value="month">Месяц</option>
+                </select>
+              </div>
+
+              <button
+                onClick={() => generateReport("pdf")}
+                style={{
+                  padding: "0.6rem 1rem",
+                  backgroundColor: "#2196f3",
+                  color: "white",
+                  border: "none",
+                  borderRadius: 6,
+                  marginRight: 10,
+                  cursor: "pointer",
+                }}
+              >
+                Скачать PDF
+              </button>
+
+              <button
+                onClick={() => generateReport("csv")}
+                style={{
+                  padding: "0.6rem 1rem",
+                  backgroundColor: "#4caf50",
+                  color: "white",
+                  border: "none",
+                  borderRadius: 6,
+                  cursor: "pointer",
+                }}
+              >
+                Скачать CSV
+              </button>
             </div>
           </>
         )}
