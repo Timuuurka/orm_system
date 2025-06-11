@@ -139,7 +139,7 @@ const Dashboard = () => {
 
     <div style={{ marginTop: 30 }}>
       <h2>
-        Отзывы ({displayedReviews.length}){" "}
+        Последние отзывы ({displayedReviews.length}){" "}
         <span style={{ fontWeight: "normal", fontSize: "0.9em", color: "#666" }}>
           (всего: {selectedBusiness.user_ratings_total || "?"}, средний рейтинг:{" "}
           {selectedBusiness.rating || "?"})
