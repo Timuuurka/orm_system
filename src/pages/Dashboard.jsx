@@ -85,7 +85,15 @@ const Dashboard = () => {
       setAnalyzing(false);
     }
   };
+const calculatedTotalReviews = displayedReviews.length;
 
+const calculatedRating =
+  calculatedTotalReviews > 0
+    ? (
+        displayedReviews.reduce((sum, r) => sum + (r.rating || 0), 0) /
+        calculatedTotalReviews
+      ).toFixed(1)
+    : "N/A";
   const handleAddFakeReview = () => {
     if (fakeReviews.length < referenceSamples.length) {
       const nextFake = referenceSamples[fakeReviews.length];
@@ -97,15 +105,6 @@ const Dashboard = () => {
   };
 
   const displayedReviews = [...reviews, ...fakeReviews].sort((a, b) => b.time - a.time);
-const calculatedTotalReviews = displayedReviews.length;
-
-const calculatedRating =
-  calculatedTotalReviews > 0
-    ? (
-        displayedReviews.reduce((sum, r) => sum + (r.rating || 0), 0) /
-        calculatedTotalReviews
-      ).toFixed(1)
-    : "N/A";
 
   const handleDownloadPDF = () => {
     const doc = new jsPDF();
