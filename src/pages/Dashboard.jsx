@@ -123,15 +123,7 @@ const Dashboard = () => {
     sentiment: r.sentiment,
     text: r.text,
   }));
-const calculatedTotalReviews = displayedReviews.length;
 
-const calculatedRating =
-  calculatedTotalReviews > 0
-    ? (
-        displayedReviews.reduce((sum, r) => sum + (r.rating || 0), 0) /
-        calculatedTotalReviews
-      ).toFixed(1)
-    : "N/A";
   return (
     <MainLayout title="Dashboard">
       <div style={{ padding: "2rem", maxWidth: 900, margin: "0 auto" }}>
@@ -143,18 +135,17 @@ const calculatedRating =
 
 {selectedBusiness && (
   <>
-    <BusinessCard   business={selectedBusiness}
-  reviews={displayedReviews}
-  averageRating={calculatedRating}
-  totalReviews={calculatedTotalReviews}/>
+    <BusinessCard business={selectedBusiness} reviews={displayedReviews} />
 
     <div style={{ marginTop: 30 }}>
-<h2>
-  Отзывы ({calculatedTotalReviews}){" "}
-  <span style={{ fontWeight: "normal", fontSize: "0.9em", color: "#666" }}>
-    (всего: {calculatedTotalReviews}, средний рейтинг: {calculatedRating})
-  </span>
-</h2>
+      <h2>
+        Отзывы ({displayedReviews.length}){" "}
+        <span style={{ fontWeight: "normal", fontSize: "0.9em", color: "#666" }}>
+          (всего: {selectedBusiness.user_ratings_total || "?"}, средний рейтинг:{" "}
+          {selectedBusiness.rating || "?"})
+        </span>
+      </h2>
+
 
               {loading && <p>Загрузка отзывов...</p>}
               {analyzing && <p>Анализ сентимента...</p>}
