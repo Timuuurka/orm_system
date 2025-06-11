@@ -10,17 +10,20 @@ const sentimentColors = {
 function BusinessCard({ business, reviews }) {
   if (!business) return null;
 
- const totalOriginal = business.user_ratings_total || 0;
-const originalSum = totalOriginal * (business.rating || 0);
+const originalCount = business.user_ratings_total || 0;
+const originalAverage = business.rating || 0;
+const currentCount = reviews.length;
 
-const newReviews = reviews.length - totalOriginal;
-const newSum = reviews
-  .slice(totalOriginal)
-  .reduce((sum, r) => sum + r.rating, 0);
+let averageRating;
 
-const combinedTotal = totalOriginal + newReviews;
-const averageRating =
-  combinedTotal > 0 ? ((originalSum + newSum) / combinedTotal).toFixed(1) : "N/A";
+if (currentCount > originalCount) {
+  const newReviews = reviews.slice(originalCount);
+  const newSum = newReviews.reduce((sum, r) => sum + r.rating, 0);
+  const totalSum = originalAverage * originalCount + newSum;
+  averageRating = (totalSum / currentCount).toFixed(1);
+} else {
+  averageRating = originalAverage.toFixed(1);
+}
 
   const sentimentCounts = reviews.reduce(
     (acc, review) => {
@@ -42,7 +45,7 @@ const averageRating =
         <strong>Средний рейтинг:</strong> {averageRating} ⭐
       </p>
 <p className="mt-1">
-  <strong>Всего отзывов:</strong> {combinedTotal}
+  <strong>Всего отзывов:</strong> {reviews.length}
 </p>
 
       <div className="mt-2 flex space-x-4">
