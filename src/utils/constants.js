@@ -34,6 +34,14 @@ export const referenceSamples = [
         alert: true
   },
       {
+    author_name: "Adilbek.",
+    rating: 5,
+    text: "I’m proud to be a student at IITU. The curriculum is up-to-date with current IT trends, and there are plenty of opportunities for hands-on experience through projects and internships. Highly recommend!",
+    time: Math.floor(Date.now() / 1000),
+    sentiment: "negative",
+        alert: true
+  },
+      {
     author_name: "Adi.",
     rating: 5,
     text: "BEST VPN SERVICE EVER! Use IITU50 to get 50% off at securevpn.kz. Stay anonymous on campus!",

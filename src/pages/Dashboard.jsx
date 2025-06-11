@@ -207,8 +207,7 @@ const Dashboard = () => {
             </div>
 
             <div style={{ marginTop: 40 }}>
-              <h2>Алерты</h2>
-              {alerts.length === 0 && <p>Алертов пока нет.</p>}
+              {alerts.length === 0}
               {alerts.map((alert) => (
                 <div
                   key={alert.id}
