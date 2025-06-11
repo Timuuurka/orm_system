@@ -1,3 +1,5 @@
+// Dashboard.jsx
+
 import React, { useState } from "react";
 import MapSearch from "../components/MapSearch";
 import { fetchPlaceDetails } from "../services/googlePlaces";
@@ -7,6 +9,9 @@ import { referenceSamples } from "../utils/constants";
 import BusinessCard from "../components/BusinessCard";
 import SentimentChart from "../components/SentimentChart";
 import MainLayout from "../layouts/MainLayout";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import { CSVLink } from "react-csv";
 
 const sentimentColors = {
   positive: "#4caf50",
@@ -21,17 +26,15 @@ const Dashboard = () => {
   const [selectedBusiness, setSelectedBusiness] = useState(null);
   const [loading, setLoading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
-  const [alerts, setAlerts] = useState([]); // 🔥 новое состояние
+  const [alerts, setAlerts] = useState([]);
+  const [reportPeriod, setReportPeriod] = useState("week");
 
-  // Выявление резкого пика негатива
   const detectAlert = (allReviews) => {
     const now = Math.floor(Date.now() / 1000);
     const last24hReviews = allReviews.filter((r) => now - r.time <= 86400);
-
     const negativeCount = last24hReviews.filter((r) => r.sentiment === "negative").length;
     const alertTriggered =
       last24hReviews.length > 0 && negativeCount / last24hReviews.length > 0.3;
-
     if (alertTriggered) {
       const alert = {
         id: Date.now(),
@@ -44,9 +47,7 @@ const Dashboard = () => {
   };
 
   const markAlertHandled = (id) => {
-    setAlerts((prev) =>
-      prev.map((a) => (a.id === id ? { ...a, handled: true } : a))
-    );
+    setAlerts((prev) => prev.map((a) => (a.id === id ? { ...a, handled: true } : a)));
   };
 
   const handlePlaceSelected = async (place) => {
@@ -58,9 +59,7 @@ const Dashboard = () => {
     try {
       const details = await fetchPlaceDetails(place.place_id, GOOGLE_MAPS_API_KEY);
       const originalReviews = details.reviews || [];
-
       const firstFive = originalReviews.sort((a, b) => b.time - a.time).slice(0, 5);
-
       setReviews(firstFive);
       setLoading(false);
       setAnalyzing(true);
@@ -77,7 +76,7 @@ const Dashboard = () => {
       );
 
       setReviews(analyzed);
-      detectAlert(analyzed); // 🔥 анализируем алерты
+      detectAlert(analyzed);
     } catch (e) {
       console.error("Ошибка при загрузке отзывов:", e);
       setReviews([]);
@@ -98,6 +97,32 @@ const Dashboard = () => {
   };
 
   const displayedReviews = [...reviews, ...fakeReviews].sort((a, b) => b.time - a.time);
+
+  const handleDownloadPDF = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(16);
+    doc.text("Отчёт по отзывам", 14, 20);
+
+    autoTable(doc, {
+      startY: 30,
+      head: [["Автор", "Оценка", "Настроение", "Отзыв"]],
+      body: displayedReviews.map((r) => [
+        r.author_name,
+        r.rating,
+        r.sentiment,
+        r.text.slice(0, 100) + (r.text.length > 100 ? "..." : ""),
+      ]),
+    });
+
+    doc.save("отчёт.pdf");
+  };
+
+  const csvData = displayedReviews.map((r) => ({
+    author: r.author_name,
+    rating: r.rating,
+    sentiment: r.sentiment,
+    text: r.text,
+  }));
 
   return (
     <MainLayout title="Dashboard">
@@ -130,11 +155,6 @@ const Dashboard = () => {
                   cursor: "pointer",
                 }}
                 disabled={fakeReviews.length >= referenceSamples.length}
-                title={
-                  fakeReviews.length >= referenceSamples.length
-                    ? "Все фейковые отзывы подгружены"
-                    : "Добавить ещё фейковый отзыв"
-                }
               >
                 Reload
               </button>
@@ -167,11 +187,6 @@ const Dashboard = () => {
                       </span>
                     </p>
                     <p>{review.text}</p>
-                    {review.alert && (
-                      <p style={{ color: "#d32f2f", fontWeight: "bold" }}>
-                        ⚠️ Внимание! Подозрительный отзыв
-                      </p>
-                    )}
                   </div>
                 ))}
               </div>
@@ -182,7 +197,6 @@ const Dashboard = () => {
               <SentimentChart reviews={displayedReviews} />
             </div>
 
-            {/* 🔥 Блок алертов */}
             <div style={{ marginTop: 40 }}>
               <h2>Алерты</h2>
               {alerts.length === 0 && <p>Алертов пока нет.</p>}
@@ -225,6 +239,52 @@ const Dashboard = () => {
                   )}
                 </div>
               ))}
+            </div>
+
+            {/* 📄 Отчёты */}
+            <div style={{ marginTop: 40 }}>
+              <h2>Скачать отчёт</h2>
+              <label>
+                Период:
+                <select
+                  value={reportPeriod}
+                  onChange={(e) => setReportPeriod(e.target.value)}
+                  style={{ marginLeft: 10 }}
+                >
+                  <option value="week">Неделя</option>
+                  <option value="month">Месяц</option>
+                </select>
+              </label>
+              <div style={{ marginTop: 10 }}>
+                <button
+                  onClick={handleDownloadPDF}
+                  style={{
+                    marginRight: 10,
+                    padding: "0.5rem 1rem",
+                    backgroundColor: "#4caf50",
+                    color: "white",
+                    border: "none",
+                    borderRadius: 6,
+                    cursor: "pointer",
+                  }}
+                >
+                  Скачать PDF
+                </button>
+                <CSVLink
+                  data={csvData}
+                  filename={"отчёт.csv"}
+                  style={{
+                    padding: "0.5rem 1rem",
+                    backgroundColor: "#1976d2",
+                    color: "white",
+                    border: "none",
+                    borderRadius: 6,
+                    textDecoration: "none",
+                  }}
+                >
+                  Скачать CSV
+                </CSVLink>
+              </div>
             </div>
           </>
         )}
