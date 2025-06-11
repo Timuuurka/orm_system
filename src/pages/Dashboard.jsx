@@ -86,15 +86,31 @@ const Dashboard = () => {
     }
   };
 
-  const handleAddFakeReview = () => {
-    if (fakeReviews.length < referenceSamples.length) {
-      const nextFake = referenceSamples[fakeReviews.length];
-      setFakeReviews([
-        ...fakeReviews,
-        { ...nextFake, time: Math.floor(Date.now() / 1000) },
-      ]);
-    }
+const handleAddFakeReview = () => {
+  if (fakeReviews.length >= referenceSamples.length) return;
+
+  const newReview = fakeReviews[fakeReviews.length]; // или как ты берёшь фейк
+
+  const updatedReviews = [...displayedReviews, newReview];
+  setDisplayedReviews(updatedReviews);
+
+  // Пересчёт среднего рейтинга
+  const updatedTotalReviews = selectedBusiness.user_ratings_total + 1;
+
+  const totalRating =
+    (selectedBusiness.rating * selectedBusiness.user_ratings_total +
+      newReview.rating) /
+    updatedTotalReviews;
+
+  const updatedBusiness = {
+    ...selectedBusiness,
+    rating: totalRating,
+    user_ratings_total: updatedTotalReviews,
   };
+
+  setSelectedBusiness(updatedBusiness);
+};
+
 
   const displayedReviews = [...reviews, ...fakeReviews].sort((a, b) => b.time - a.time);
 
@@ -133,12 +149,19 @@ const Dashboard = () => {
           <MapSearch onPlaceSelected={handlePlaceSelected} />
         </div>
 
-        {selectedBusiness && (
-          <>
-            <BusinessCard business={selectedBusiness} reviews={displayedReviews} />
+{selectedBusiness && (
+  <>
+    <BusinessCard business={selectedBusiness} reviews={displayedReviews} />
 
-            <div style={{ marginTop: 30 }}>
-              <h2> Последние отзывы ({displayedReviews.length})</h2>
+    <div style={{ marginTop: 30 }}>
+      <h2>
+        Отзывы ({displayedReviews.length}){" "}
+        <span style={{ fontWeight: "normal", fontSize: "0.9em", color: "#666" }}>
+          (всего: {selectedBusiness.user_ratings_total || "?"}, средний рейтинг:{" "}
+          {selectedBusiness.rating || "?"})
+        </span>
+      </h2>
+
               {loading && <p>Загрузка отзывов...</p>}
               {analyzing && <p>Анализ сентимента...</p>}
               {!loading && displayedReviews.length === 0 && <p>Отзывы не найдены.</p>}
