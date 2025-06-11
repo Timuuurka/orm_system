@@ -7,9 +7,6 @@ import { referenceSamples } from "../utils/constants";
 import BusinessCard from "../components/BusinessCard";
 import SentimentChart from "../components/SentimentChart";
 import MainLayout from "../layouts/MainLayout";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
-import { CSVLink } from "react-csv";
 
 const sentimentColors = {
   positive: "#4caf50",
@@ -24,9 +21,9 @@ const Dashboard = () => {
   const [selectedBusiness, setSelectedBusiness] = useState(null);
   const [loading, setLoading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
-  const [alerts, setAlerts] = useState([]);
-  const [period, setPeriod] = useState("week");
+  const [alerts, setAlerts] = useState([]); // 🔥 новое состояние
 
+  // Выявление резкого пика негатива
   const detectAlert = (allReviews) => {
     const now = Math.floor(Date.now() / 1000);
     const last24hReviews = allReviews.filter((r) => now - r.time <= 86400);
@@ -61,6 +58,7 @@ const Dashboard = () => {
     try {
       const details = await fetchPlaceDetails(place.place_id, GOOGLE_MAPS_API_KEY);
       const originalReviews = details.reviews || [];
+
       const firstFive = originalReviews.sort((a, b) => b.time - a.time).slice(0, 5);
 
       setReviews(firstFive);
@@ -79,7 +77,7 @@ const Dashboard = () => {
       );
 
       setReviews(analyzed);
-      detectAlert(analyzed);
+      detectAlert(analyzed); // 🔥 анализируем алерты
     } catch (e) {
       console.error("Ошибка при загрузке отзывов:", e);
       setReviews([]);
@@ -98,38 +96,6 @@ const Dashboard = () => {
       ]);
     }
   };
-
-
-const handleDownloadPDF = () => {
-  const doc = new jsPDF();
-  doc.setFontSize(16);
-  doc.text("Отчёт по отзывам", 14, 20);
-  doc.setFontSize(12);
-  doc.text(`Всего отзывов: ${displayedReviews.length}`, 14, 30);
-
-  autoTable(doc, {
-    startY: 40,
-    head: [["Имя", "Рейтинг", "Настроение", "Отзыв"]],
-    body: displayedReviews.map((r) => [
-      r.author_name || "Неизвестно",
-      r.rating || "-",
-      r.sentiment || "unknown",
-      r.text?.slice(0, 150) || "", // первые 150 символов текста
-    ]),
-  });
-
-  doc.save("report.pdf");
-};
-
-const csvData = [
-  ["Имя", "Рейтинг", "Настроение", "Отзыв"],
-  ...displayedReviews.map((r) => [
-    r.author_name || "Неизвестно",
-    r.rating || "-",
-    r.sentiment || "unknown",
-    r.text?.replace(/\n/g, " ") || "",
-  ]),
-];
 
   const displayedReviews = [...reviews, ...fakeReviews].sort((a, b) => b.time - a.time);
 
@@ -164,6 +130,11 @@ const csvData = [
                   cursor: "pointer",
                 }}
                 disabled={fakeReviews.length >= referenceSamples.length}
+                title={
+                  fakeReviews.length >= referenceSamples.length
+                    ? "Все фейковые отзывы подгружены"
+                    : "Добавить ещё фейковый отзыв"
+                }
               >
                 Reload
               </button>
@@ -211,6 +182,7 @@ const csvData = [
               <SentimentChart reviews={displayedReviews} />
             </div>
 
+            {/* 🔥 Блок алертов */}
             <div style={{ marginTop: 40 }}>
               <h2>Алерты</h2>
               {alerts.length === 0 && <p>Алертов пока нет.</p>}
@@ -254,60 +226,6 @@ const csvData = [
                 </div>
               ))}
             </div>
-
-    <div style={{ marginTop: 50 }}>
-      <h2>📄 Отчёты</h2>
-      <p>Экспортируйте все отображённые отзывы (включая фейковые) в формате PDF или CSV.</p>
-
-      <div style={{ marginBottom: 20 }}>
-        <label htmlFor="period">Период:</label>
-        <select
-          id="period"
-          value={reportPeriod}
-          onChange={(e) => setReportPeriod(e.target.value)}
-          style={{
-            marginLeft: 10,
-            padding: "5px 10px",
-            borderRadius: 6,
-            border: "1px solid #ccc",
-          }}
-        >
-          <option value="week">Последняя неделя</option>
-          <option value="month">Последний месяц</option>
-        </select>
-      </div>
-
-      <div style={{ display: "flex", gap: 15 }}>
-        <button
-          onClick={handleDownloadPDF}
-          style={{
-            padding: "0.5rem 1rem",
-            backgroundColor: "#d32f2f",
-            color: "white",
-            border: "none",
-            borderRadius: 6,
-            cursor: "pointer",
-          }}
-        >
-          Скачать PDF
-        </button>
-
-        <CSVLink
-          filename="report.csv"
-          data={csvData}
-          target="_blank"
-          style={{
-            padding: "0.5rem 1rem",
-            backgroundColor: "#388e3c",
-            color: "white",
-            borderRadius: 6,
-            textDecoration: "none",
-          }}
-        >
-          Скачать CSV
-        </CSVLink>
-      </div>
-    </div>
           </>
         )}
       </div>
