@@ -10,15 +10,9 @@ const sentimentColors = {
 function BusinessCard({ business, reviews }) {
   if (!business) return null;
 
-  // Средний рейтинг
   const averageRating =
-    reviews.length > 0
-      ? (
-          reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
-        ).toFixed(1)
-      : "N/A";
+    business.rating !== undefined ? business.rating.toFixed(1) : "N/A";
 
-  // Подсчёт по настроениям
   const sentimentCounts = reviews.reduce(
     (acc, review) => {
       const sentiment = review.sentiment || "unknown";
@@ -37,6 +31,9 @@ function BusinessCard({ business, reviews }) {
       <p className="text-gray-600">{business.formatted_address}</p>
       <p className="mt-2">
         <strong>Средний рейтинг:</strong> {averageRating} ⭐
+      </p>
+      <p className="mt-1">
+        <strong>Всего отзывов:</strong> {business.user_ratings_total || "?"}
       </p>
       <div className="mt-2 flex space-x-4">
         <div>
