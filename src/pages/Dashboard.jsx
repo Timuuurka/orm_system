@@ -268,21 +268,7 @@ const Dashboard = () => {
         if (sameAuthorCount > 1) {
           threats.push("Spam");
         }
-
-        // Smear Campaigns: если негативный отзыв в течение последних 24 часов при всплеске
-        const last24hReviews = displayedReviews.filter((r) => now - r.time <= 86400);
-        const recentNegative = last24hReviews.filter(
-          (r) => r.sentiment === "negative"
-        );
-        if (
-          review.sentiment === "negative" &&
-          now - review.time <= 86400 &&
-          recentNegative.length / last24hReviews.length > 0.3
-        ) {
-          threats.push("Резкий всплеск негатива (Smear Campaign)");
-        }
-
-        // Fake News (рус + англ)
+      // Fake News (рус + англ)
         const fakeKeywords = [
           "враньё", "неправда", "фейк", "лживая", // рус/каз
           "fake", "lie", "false", "not true", "fake news", "scam", "misleading" // англ
