@@ -9,6 +9,7 @@ import SentimentChart from "../components/SentimentChart";
 import MainLayout from "../layouts/MainLayout";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { CSVLink } from "react-csv";
 
 const sentimentColors = {
   positive: "#4caf50",
@@ -98,56 +99,37 @@ const Dashboard = () => {
     }
   };
 
-  const generateReport = (type = "pdf") => {
-    const all = [...reviews, ...fakeReviews];
-    const now = Date.now();
-    const cutoff = period === "week" ? now - 7 * 86400000 : now - 30 * 86400000;
-    const filtered = all.filter((r) => r.time * 1000 > cutoff);
 
-    const sentimentStats = filtered.reduce(
-      (acc, r) => {
-        acc[r.sentiment] = (acc[r.sentiment] || 0) + 1;
-        return acc;
-      },
-      { positive: 0, neutral: 0, negative: 0 }
-    );
+const handleDownloadPDF = () => {
+  const doc = new jsPDF();
+  doc.setFontSize(16);
+  doc.text("Отчёт по отзывам", 14, 20);
+  doc.setFontSize(12);
+  doc.text(`Всего отзывов: ${displayedReviews.length}`, 14, 30);
 
-    if (type === "csv") {
-      const rows = filtered.map((r) =>
-        `${r.author_name},${r.rating},${r.sentiment},${r.text.replace(/[\r\n,]/g, " ")}`
-      );
-      const csv = `Author,Rating,Sentiment,Text\n${rows.join("\n")}`;
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", "report.csv");
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } else {
-      const doc = new jsPDF();
-      doc.text(`Отчёт по отзывам (${period === "week" ? "неделя" : "месяц"})`, 14, 15);
-      doc.text(
-        `Всего отзывов: ${filtered.length}, Позитив: ${sentimentStats.positive}, Нейтрально: ${sentimentStats.neutral}, Негатив: ${sentimentStats.negative}`,
-        14,
-        25
-      );
+  autoTable(doc, {
+    startY: 40,
+    head: [["Имя", "Рейтинг", "Настроение", "Отзыв"]],
+    body: displayedReviews.map((r) => [
+      r.author_name || "Неизвестно",
+      r.rating || "-",
+      r.sentiment || "unknown",
+      r.text?.slice(0, 150) || "", // первые 150 символов текста
+    ]),
+  });
 
-      autoTable(doc, {
-        startY: 35,
-        head: [["Автор", "Рейтинг", "Сентимент", "Текст"]],
-        body: filtered.map((r) => [
-          r.author_name,
-          r.rating,
-          r.sentiment,
-          r.text.slice(0, 60) + "...",
-        ]),
-      });
+  doc.save("report.pdf");
+};
 
-      doc.save("report.pdf");
-    }
-  };
+const csvData = [
+  ["Имя", "Рейтинг", "Настроение", "Отзыв"],
+  ...displayedReviews.map((r) => [
+    r.author_name || "Неизвестно",
+    r.rating || "-",
+    r.sentiment || "unknown",
+    r.text?.replace(/\n/g, " ") || "",
+  ]),
+];
 
   const displayedReviews = [...reviews, ...fakeReviews].sort((a, b) => b.time - a.time);
 
@@ -273,49 +255,59 @@ const Dashboard = () => {
               ))}
             </div>
 
-            <div style={{ marginTop: 40 }}>
-              <h2>Отчёт по отзывам</h2>
-              <div style={{ marginBottom: 15 }}>
-                <label>Период: </label>
-                <select
-                  value={period}
-                  onChange={(e) => setPeriod(e.target.value)}
-                  style={{ padding: "0.4rem", borderRadius: 6, marginLeft: 10 }}
-                >
-                  <option value="week">Неделя</option>
-                  <option value="month">Месяц</option>
-                </select>
-              </div>
+    <div style={{ marginTop: 50 }}>
+      <h2>📄 Отчёты</h2>
+      <p>Экспортируйте все отображённые отзывы (включая фейковые) в формате PDF или CSV.</p>
 
-              <button
-                onClick={() => generateReport("pdf")}
-                style={{
-                  padding: "0.6rem 1rem",
-                  backgroundColor: "#2196f3",
-                  color: "white",
-                  border: "none",
-                  borderRadius: 6,
-                  marginRight: 10,
-                  cursor: "pointer",
-                }}
-              >
-                Скачать PDF
-              </button>
+      <div style={{ marginBottom: 20 }}>
+        <label htmlFor="period">Период:</label>
+        <select
+          id="period"
+          value={reportPeriod}
+          onChange={(e) => setReportPeriod(e.target.value)}
+          style={{
+            marginLeft: 10,
+            padding: "5px 10px",
+            borderRadius: 6,
+            border: "1px solid #ccc",
+          }}
+        >
+          <option value="week">Последняя неделя</option>
+          <option value="month">Последний месяц</option>
+        </select>
+      </div>
 
-              <button
-                onClick={() => generateReport("csv")}
-                style={{
-                  padding: "0.6rem 1rem",
-                  backgroundColor: "#4caf50",
-                  color: "white",
-                  border: "none",
-                  borderRadius: 6,
-                  cursor: "pointer",
-                }}
-              >
-                Скачать CSV
-              </button>
-            </div>
+      <div style={{ display: "flex", gap: 15 }}>
+        <button
+          onClick={handleDownloadPDF}
+          style={{
+            padding: "0.5rem 1rem",
+            backgroundColor: "#d32f2f",
+            color: "white",
+            border: "none",
+            borderRadius: 6,
+            cursor: "pointer",
+          }}
+        >
+          Скачать PDF
+        </button>
+
+        <CSVLink
+          filename="report.csv"
+          data={csvData}
+          target="_blank"
+          style={{
+            padding: "0.5rem 1rem",
+            backgroundColor: "#388e3c",
+            color: "white",
+            borderRadius: 6,
+            textDecoration: "none",
+          }}
+        >
+          Скачать CSV
+        </CSVLink>
+      </div>
+    </div>
           </>
         )}
       </div>
