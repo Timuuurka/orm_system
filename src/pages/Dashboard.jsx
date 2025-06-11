@@ -259,6 +259,9 @@ const Dashboard = () => {
       {displayedReviews.map((review, index) => {
         const threats = [];
 
+        const reviewText = review.text.toLowerCase();
+        const now = Math.floor(Date.now() / 1000);
+
         // Fake Reviews: одинаковый автор более одного раза
         const sameAuthorCount = displayedReviews.filter(
           (r) => r.author_name === review.author_name
@@ -267,8 +270,7 @@ const Dashboard = () => {
           threats.push("Повторяющийся автор (Fake Review)");
         }
 
-        // Smear Campaigns: если негативный и написан за последние 24ч при резком всплеске
-        const now = Math.floor(Date.now() / 1000);
+        // Smear Campaigns: если негативный отзыв в течение последних 24 часов при всплеске
         const last24hReviews = displayedReviews.filter((r) => now - r.time <= 86400);
         const recentNegative = last24hReviews.filter(
           (r) => r.sentiment === "negative"
@@ -281,24 +283,27 @@ const Dashboard = () => {
           threats.push("Резкий всплеск негатива (Smear Campaign)");
         }
 
-        // Fake News (симуляция): если есть фраза "это враньё" или "неправда"
-        if (
-          review.text.includes("враньё") ||
-          review.text.includes("неправда") ||
-          review.text.toLowerCase().includes("fake")
-        ) {
+        // Fake News (рус + англ)
+        const fakeKeywords = [
+          "враньё", "неправда", "фейк", "лживая", // рус/каз
+          "fake", "lie", "false", "not true", "fake news", "scam", "misleading" // англ
+        ];
+        if (fakeKeywords.some((kw) => reviewText.includes(kw))) {
           threats.push("Фейковая информация (Fake News)");
         }
 
-        // Cyberbullying (симуляция): если есть агрессивные слова
-        const toxicWords = ["тупой", "ненавижу", "отстой", "идиот"];
-        const lowerText = review.text.toLowerCase();
-        if (toxicWords.some((w) => lowerText.includes(w))) {
+        // Cyberbullying (рус + англ)
+        const toxicWords = [
+          "тупой", "ненавижу", "отстой", "идиот", "мерзкий", // рус
+          "stupid", "hate", "trash", "idiot", "disgusting", "ugly", "racist" // англ
+        ];
+        if (toxicWords.some((word) => reviewText.includes(word))) {
           threats.push("Насилие в комментариях (Cyberbullying)");
         }
 
-        // Defamatory Articles / SEO attacks — имитация
-        if (review.text.includes("поисковик") || review.text.includes("google")) {
+        // Negative SEO (симуляция по ключевым словам)
+        const seoKeywords = ["поисковик", "google", "ranking", "seo", "search engine"];
+        if (seoKeywords.some((kw) => reviewText.includes(kw))) {
           threats.push("SEO-атака (Negative SEO)");
         }
 
@@ -331,6 +336,7 @@ const Dashboard = () => {
     </div>
   )}
 </div>
+
 
             {/* 📄 Отчёты */}
             <div style={{ marginTop: 40 }}>
