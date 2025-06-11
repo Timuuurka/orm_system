@@ -7,8 +7,9 @@ const sentimentColors = {
   unknown: "#000000",
 };
 
-function BusinessCard({ business, reviews }) {
+function BusinessCard({ business, reviews, averageRating, totalReviews }) {
   if (!business) return null;
+
 
   const averageRating =
     business.rating !== undefined ? business.rating.toFixed(1) : "N/A";
@@ -29,12 +30,13 @@ function BusinessCard({ business, reviews }) {
     <div className="p-4 rounded-lg shadow-md border border-gray-300 max-w-md">
       <h2 className="text-xl font-semibold">{business.name}</h2>
       <p className="text-gray-600">{business.formatted_address}</p>
-      <p className="mt-2">
-        <strong>Средний рейтинг:</strong> {averageRating} ⭐
-      </p>
-      <p className="mt-1">
-        <strong>Всего отзывов:</strong> {business.user_ratings_total || "?"}
-      </p>
+<p className="mt-2">
+  <strong>Средний рейтинг:</strong> {averageRating} ⭐
+</p>
+<p className="mt-1">
+  <strong>Всего отзывов:</strong> {totalReviews}
+</p>
+
       <div className="mt-2 flex space-x-4">
         <div>
           <span
