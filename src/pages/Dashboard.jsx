@@ -133,19 +133,12 @@ const Dashboard = () => {
           <MapSearch onPlaceSelected={handlePlaceSelected} />
         </div>
 
-{selectedBusiness && (
-  <>
-    <BusinessCard business={selectedBusiness} reviews={displayedReviews} />
+        {selectedBusiness && (
+          <>
+            <BusinessCard business={selectedBusiness} reviews={displayedReviews} />
 
-    <div style={{ marginTop: 30 }}>
-      <h2>
-        Последние отзывы ({displayedReviews.length}){" "}
-        <span style={{ fontWeight: "normal", fontSize: "0.9em", color: "#666" }}>
-          (всего: {selectedBusiness.user_ratings_total || "?"}, средний рейтинг:{" "}
-          {selectedBusiness.rating || "?"})
-        </span>
-      </h2>
-
+            <div style={{ marginTop: 30 }}>
+              <h2> Последние отзывы ({displayedReviews.length})</h2>
               {loading && <p>Загрузка отзывов...</p>}
               {analyzing && <p>Анализ сентимента...</p>}
               {!loading && displayedReviews.length === 0 && <p>Отзывы не найдены.</p>}
