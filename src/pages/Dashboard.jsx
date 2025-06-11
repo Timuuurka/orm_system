@@ -85,15 +85,7 @@ const Dashboard = () => {
       setAnalyzing(false);
     }
   };
-const calculatedTotalReviews = displayedReviews.length;
 
-const calculatedRating =
-  calculatedTotalReviews > 0
-    ? (
-        displayedReviews.reduce((sum, r) => sum + (r.rating || 0), 0) /
-        calculatedTotalReviews
-      ).toFixed(1)
-    : "N/A";
   const handleAddFakeReview = () => {
     if (fakeReviews.length < referenceSamples.length) {
       const nextFake = referenceSamples[fakeReviews.length];
@@ -131,7 +123,15 @@ const calculatedRating =
     sentiment: r.sentiment,
     text: r.text,
   }));
+const calculatedTotalReviews = displayedReviews.length;
 
+const calculatedRating =
+  calculatedTotalReviews > 0
+    ? (
+        displayedReviews.reduce((sum, r) => sum + (r.rating || 0), 0) /
+        calculatedTotalReviews
+      ).toFixed(1)
+    : "N/A";
   return (
     <MainLayout title="Dashboard">
       <div style={{ padding: "2rem", maxWidth: 900, margin: "0 auto" }}>

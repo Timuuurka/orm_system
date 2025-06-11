@@ -21,7 +21,6 @@ function BusinessCard({ business, reviews, averageRating, totalReviews }) {
     { positive: 0, neutral: 0, negative: 0, unknown: 0 }
   );
 
-  const total = reviews.length || 1;
 
   return (
     <div className="p-4 rounded-lg shadow-md border border-gray-300 max-w-md">
@@ -41,7 +40,7 @@ function BusinessCard({ business, reviews, averageRating, totalReviews }) {
             style={{ color: sentimentColors.positive }}
           >
             Позитивных:{" "}
-            {((sentimentCounts.positive / total) * 100).toFixed(0)}%
+            {((sentimentCounts.positive / totalReviews) * 100).toFixed(0)}%
           </span>
         </div>
         <div>
@@ -50,7 +49,7 @@ function BusinessCard({ business, reviews, averageRating, totalReviews }) {
             style={{ color: sentimentColors.neutral }}
           >
             Нейтральных:{" "}
-            {((sentimentCounts.neutral / total) * 100).toFixed(0)}%
+            {((sentimentCounts.neutral / totalReviews) * 100).toFixed(0)}%
           </span>
         </div>
         <div>
@@ -59,7 +58,7 @@ function BusinessCard({ business, reviews, averageRating, totalReviews }) {
             style={{ color: sentimentColors.negative }}
           >
             Негативных:{" "}
-            {((sentimentCounts.negative / total) * 100).toFixed(0)}%
+            {((sentimentCounts.negative / totalReviews) * 100).toFixed(0)}%
           </span>
         </div>
       </div>
