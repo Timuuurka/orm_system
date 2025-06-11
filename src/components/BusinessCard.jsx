@@ -11,9 +11,6 @@ function BusinessCard({ business, reviews, averageRating, totalReviews }) {
   if (!business) return null;
 
 
-  const averageRating =
-    business.rating !== undefined ? business.rating.toFixed(1) : "N/A";
-
   const sentimentCounts = reviews.reduce(
     (acc, review) => {
       const sentiment = review.sentiment || "unknown";
