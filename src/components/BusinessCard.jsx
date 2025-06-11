@@ -10,7 +10,7 @@ const sentimentColors = {
 function BusinessCard({ business, reviews }) {
   if (!business) return null;
 
-const totalOriginal = business.user_ratings_total || 0;
+ const totalOriginal = business.user_ratings_total || 0;
 const originalSum = totalOriginal * (business.rating || 0);
 
 const newReviews = reviews.length - totalOriginal;
