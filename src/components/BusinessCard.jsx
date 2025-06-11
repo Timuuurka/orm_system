@@ -10,8 +10,8 @@ const sentimentColors = {
 function BusinessCard({ business, reviews }) {
   if (!business) return null;
 
-const ratingNumber = Number(business.rating);
-const averageRating = !isNaN(ratingNumber) ? ratingNumber.toFixed(1) : "N/A";
+  const averageRating =
+    business.rating !== undefined ? business.rating.toFixed(1) : "N/A";
 
   const sentimentCounts = reviews.reduce(
     (acc, review) => {

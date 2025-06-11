@@ -135,18 +135,7 @@ const Dashboard = () => {
 
 {selectedBusiness && (
   <>
-    <BusinessCard
-      business={{
-        ...selectedBusiness,
-        rating: (
-          displayedReviews.reduce((sum, r) => sum + r.rating, 0) /
-          displayedReviews.length
-        ).toFixed(1),
-        user_ratings_total: displayedReviews.length,
-      }}
-      reviews={displayedReviews}
-    />
-
+    <BusinessCard business={selectedBusiness} reviews={displayedReviews} />
 
     <div style={{ marginTop: 30 }}>
       <h2>
@@ -156,6 +145,7 @@ const Dashboard = () => {
           {selectedBusiness.rating || "?"})
         </span>
       </h2>
+
 
 
               {loading && <p>Загрузка отзывов...</p>}
