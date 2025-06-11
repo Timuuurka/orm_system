@@ -249,6 +249,88 @@ const Dashboard = () => {
                 </div>
               ))}
             </div>
+{/* 🛡️ Defender: Борьба с угрозами */}
+<div style={{ marginTop: 40 }}>
+  <h2>🛡️ Обнаруженные угрозы</h2>
+  {displayedReviews.length === 0 ? (
+    <p>Угрозы не обнаружены (отзывы отсутствуют).</p>
+  ) : (
+    <div style={{ display: "flex", flexDirection: "column", gap: 15 }}>
+      {displayedReviews.map((review, index) => {
+        const threats = [];
+
+        // Fake Reviews: одинаковый автор более одного раза
+        const sameAuthorCount = displayedReviews.filter(
+          (r) => r.author_name === review.author_name
+        ).length;
+        if (sameAuthorCount > 1) {
+          threats.push("Повторяющийся автор (Fake Review)");
+        }
+
+        // Smear Campaigns: если негативный и написан за последние 24ч при резком всплеске
+        const now = Math.floor(Date.now() / 1000);
+        const last24hReviews = displayedReviews.filter((r) => now - r.time <= 86400);
+        const recentNegative = last24hReviews.filter(
+          (r) => r.sentiment === "negative"
+        );
+        if (
+          review.sentiment === "negative" &&
+          now - review.time <= 86400 &&
+          recentNegative.length / last24hReviews.length > 0.3
+        ) {
+          threats.push("Резкий всплеск негатива (Smear Campaign)");
+        }
+
+        // Fake News (симуляция): если есть фраза "это враньё" или "неправда"
+        if (
+          review.text.includes("враньё") ||
+          review.text.includes("неправда") ||
+          review.text.toLowerCase().includes("fake")
+        ) {
+          threats.push("Фейковая информация (Fake News)");
+        }
+
+        // Cyberbullying (симуляция): если есть агрессивные слова
+        const toxicWords = ["тупой", "ненавижу", "отстой", "идиот"];
+        const lowerText = review.text.toLowerCase();
+        if (toxicWords.some((w) => lowerText.includes(w))) {
+          threats.push("Насилие в комментариях (Cyberbullying)");
+        }
+
+        // Defamatory Articles / SEO attacks — имитация
+        if (review.text.includes("поисковик") || review.text.includes("google")) {
+          threats.push("SEO-атака (Negative SEO)");
+        }
+
+        return (
+          threats.length > 0 && (
+            <div
+              key={index}
+              style={{
+                border: "1px solid #ff9800",
+                padding: 15,
+                borderRadius: 8,
+                backgroundColor: "#fff3e0",
+                boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+              }}
+            >
+              <p>
+                <strong>{review.author_name[0]}</strong> написал: {review.text}
+              </p>
+              <ul style={{ marginTop: 10 }}>
+                {threats.map((threat, idx) => (
+                  <li key={idx} style={{ color: "#e65100", fontWeight: "bold" }}>
+                    ⚠️ {threat}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )
+        );
+      })}
+    </div>
+  )}
+</div>
 
             {/* 📄 Отчёты */}
             <div style={{ marginTop: 40 }}>
