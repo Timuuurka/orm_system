@@ -86,28 +86,15 @@ const Dashboard = () => {
     }
   };
 
-const handleAddFakeReview = () => {
-  if (fakeReviews.length < referenceSamples.length) {
-    const nextFake = referenceSamples[fakeReviews.length];
-    const updatedFake = { ...nextFake, time: Math.floor(Date.now() / 1000) };
-    const updatedFakeReviews = [...fakeReviews, updatedFake];
-
-    setFakeReviews(updatedFakeReviews);
-
-    const allReviews = [...reviews, ...updatedFakeReviews];
-
-    // Пересчёт рейтинга
-    const newAverageRating =
-      allReviews.reduce((sum, r) => sum + r.rating, 0) / allReviews.length;
-
-    setSelectedBusiness((prev) => ({
-      ...prev,
-      rating: newAverageRating.toFixed(1),
-      user_ratings_total: allReviews.length,
-    }));
-  }
-};
-
+  const handleAddFakeReview = () => {
+    if (fakeReviews.length < referenceSamples.length) {
+      const nextFake = referenceSamples[fakeReviews.length];
+      setFakeReviews([
+        ...fakeReviews,
+        { ...nextFake, time: Math.floor(Date.now() / 1000) },
+      ]);
+    }
+  };
 
   const displayedReviews = [...reviews, ...fakeReviews].sort((a, b) => b.time - a.time);
 
