@@ -14,7 +14,7 @@ export const referenceSamples = [
     rating: 1,
     text: "This university promised me a full scholarship and job placement, but after enrolling they said it was just a marketing slogan. Complete scam!",
     time: Math.floor(Date.now() / 1000),
-    sentiment: "Negative",
+    sentiment: "negative",
         alert: true
   },
     {
@@ -22,7 +22,7 @@ export const referenceSamples = [
     rating: 2,
     text: "If you're interested in making $10,000 a month from home, check out my profile! Not related to this place but trust me, it works.",
     time: Math.floor(Date.now() / 1000),
-    sentiment: "Negative",
+    sentiment: "negative",
         alert: true
   },
     {
@@ -30,7 +30,7 @@ export const referenceSamples = [
     rating: 3,
     text: "This place is trash, the staff are idiots and have no idea what they’re doing. Absolutely disgusting service.",
     time: Math.floor(Date.now() / 1000),
-    sentiment: "Negative",
+    sentiment: "negative",
         alert: true
   },
       {
@@ -38,7 +38,7 @@ export const referenceSamples = [
     rating: 5,
     text: "BEST VPN SERVICE EVER! Use IITU50 to get 50% off at securevpn.kz. Stay anonymous on campus!",
     time: Math.floor(Date.now() / 1000),
-    sentiment: "Negative",
+    sentiment: "negative",
         alert: true
   },
         {
@@ -46,7 +46,7 @@ export const referenceSamples = [
     rating: 5,
     text: "BEST VPN SERVICE EVER! Use IITU50 to get 50% off at securevpn.kz. Stay anonymous on campus!",
     time: Math.floor(Date.now() / 1000),
-    sentiment: "Negative",
+    sentiment: "negative",
     alert: true
   },
 
